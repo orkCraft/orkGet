@@ -1,0 +1,236 @@
+"""The installer (install.sh, docs/install.md): one script, the product a word. Each step logged, its outcome
+sent only after a yes and only as schemas/install.json lists it, the answer handed to the product with the
+same id. Orkline's tests of its install.sh before orkGet, once for each product; every run here has a
+stand-in uv (and curl), so nothing is downloaded."""
+from __future__ import annotations
+
+import json
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+from orkget import consent, profile, usage
+from profiles import ALL, ORKBOARD, ORKLINE
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPT = ROOT / "install.sh"
+
+PRODUCT_EXE = """#!/bin/sh
+case "$1" in
+  --version) echo "$(basename "$0") 9.9.9" ;;
+  usage) echo "$*" >> "$HOME/usage-said" ;;
+esac
+"""
+
+UV = """#!/bin/sh
+echo "uv $*" >> "$HOME/uv-calls"
+case "$1 $2" in
+  "--version "*) echo "uv 0.0.0" ;;
+  "python install") ;;
+  "tool install")
+    if [ -n "${FAKE_FAIL:-}" ]; then echo "$FAKE_FAIL" >&2; exit 2; fi
+    name="$(printf '%%s' "$6" | sed 's/\\[.*//')"
+    mkdir -p "$HOME/.local/bin"
+    cat > "$HOME/.local/bin/$name" <<'EOF'
+%s
+EOF
+    chmod +x "$HOME/.local/bin/$name" ;;
+  "tool update-shell") ;;
+  "tool dir") echo "$HOME/.local/bin" ;;
+esac
+""" % PRODUCT_EXE.strip()
+
+
+def _bin(folder: Path, name: str, text: str) -> None:
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / name).write_text(text, encoding="utf-8")
+    (folder / name).chmod(0o755)
+
+
+def _run(tmp_path: Path, *args: str, uv: bool = True, env: dict | None = None, script: Path = SCRIPT):
+    home, fake = tmp_path / "home", tmp_path / "bin"
+    home.mkdir(parents=True, exist_ok=True)
+    if uv:
+        _bin(fake, "uv", UV)
+    _bin(fake, "claude", "#!/bin/sh\n")
+    base = {"HOME": str(home), "PATH": f"{fake}:/usr/bin:/bin", "ORKCRAFT_USAGE_DEBUG": "1"}
+    # A session of its own: no terminal to ask in, as under a pipe with no tty.
+    done = subprocess.run(["sh", str(script), *args], env={**base, **(env or {})}, capture_output=True,
+                          text=True, timeout=60, start_new_session=True)
+    events = [json.loads(line.split(": ", 1)[1]) for line in done.stderr.splitlines()
+              if line.split(" usage: ", 1)[0] in ("orkcraft", "orkboard") and " usage: " in line]
+    return done, events, home
+
+
+def _names(events):
+    return [(b["events"][0]["event"], b["events"][0]["props"].get("step")) for b in events]
+
+
+def _as(product: profile.Profile) -> tuple[str, ...]:
+    return () if product is ORKLINE else ("--product", product.product)
+
+
+@pytest.mark.parametrize("args, env", [((), {}), (("--no-report",), {}), (("--report",), {"DO_NOT_TRACK": "1"}),
+                                       (("--report",), {"CI": "true"}), (("--report",), {"ORKCRAFT_NO_USAGE": "1"})])
+def test_nothing_is_sent_without_a_yes_or_where_tracking_is_off(product, tmp_path, args, env):
+    done, events, home = _run(tmp_path, *_as(product), *args, env=env)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert events == []
+    said = (home / "usage-said").read_text().split() if (home / "usage-said").exists() else []
+    # A no said here is the product's answer; no question asked (no terminal, or tracking off) leaves it to it.
+    assert said == (["usage", "off"] if args == ("--no-report",) else [])
+
+
+def test_a_yes_sends_each_step_as_the_proxy_knows_it_and_hands_the_id_to_the_product(product, tmp_path):
+    done, events, home = _run(tmp_path, *_as(product), "--report")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert _names(events) == [("install_started", None), ("install_step", "uv"), ("install_step", "python"),
+                              ("install_step", "package"), ("install_step", "version"),
+                              ("install_step", "window"), ("install_step", "agents"), ("install_finished", None)]
+    ids = {b["install_id"] for b in events}
+    assert len(ids) == 1 and consent.ID.fullmatch(ids.pop() or "")
+    for b in events:                     # every property is one the copy's list and the proxy's allow
+        e = b["events"][0]
+        assert usage.clean(e["event"], e["props"]) == e["props"], e
+        assert b["app_version"] == "installer-2" and b["os"] in ("linux", "darwin")
+        assert b["product"] == product.product
+    assert done.stderr.startswith(f"{product.agent} usage: "), done.stderr[:200]   # nothing else on stderr
+    agents = events[6]["events"][0]["props"]
+    assert agents["tools"] == ["claude"]
+    assert events[-1]["events"][0]["props"]["ok"] is True
+    assert (home / "usage-said").read_text().split() == ["usage", "on", "--id", events[0]["install_id"]]
+    log = (home / ".orkcraft" / "install.log").read_text()
+    assert f"== package: uv tool install --force --python 3.12 {product.package}[gui] @ git+https://github.com/" in log
+    assert f"{product.name} is installed. Next time: open a new terminal, go to a project and run: " in done.stdout
+
+
+def test_a_failed_step_says_its_kind_of_error_and_where_to_tell_us(product, tmp_path):
+    done, events, home = _run(tmp_path, *_as(product), "--report",
+                              env={"FAKE_FAIL": "error: Failed to connect to github.com/me/secret-path"})
+    assert done.returncode == 1
+    package = events[-2]["events"][0]
+    assert package["props"] == {"step": "package", "ok": False, "seconds": "<10", "error": "network",
+                                "source": "git"}
+    assert events[-1]["events"][0]["props"]["failed_step"] == "package"
+    assert "secret-path" not in done.stderr                    # the error's text stays in the log
+    assert "secret-path" in (home / ".orkcraft" / "install.log").read_text()
+    assert f"{product.name} did not install: the package step failed" in done.stdout
+    repo = product.source.removeprefix("git+")
+    assert f"{repo}/issues/new?title=Install%20failed%3A%20package" in done.stdout
+    assert not (home / "usage-said").exists()
+
+
+def test_without_uv_it_puts_the_pinned_one_in_place(tmp_path):
+    home = tmp_path / "home"
+    curl = f"""#!/bin/sh
+echo "curl $*" >> "{home}/curl-calls"
+out=/dev/stdout
+while [ $# -gt 0 ]; do [ "$1" = -o ] && out="$2"; shift; done
+cat > "$out" <<'EOS'
+mkdir -p "$HOME/.local/bin"
+cat > "$HOME/.local/bin/uv" <<'UVEOF'
+{UV.strip()}
+UVEOF
+chmod +x "$HOME/.local/bin/uv"
+EOS
+"""
+    home.mkdir()
+    _bin(tmp_path / "bin", "curl", curl)
+    done, events, home = _run(tmp_path, "--report", uv=False)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert events[1]["events"][0]["props"] == {"step": "uv", "ok": True, "seconds": "<10", "found": False}
+    assert "https://astral.sh/uv/" in (home / "curl-calls").read_text()
+
+
+def test_a_failed_download_of_uv_fails_its_step_as_a_network_error(tmp_path):
+    _bin(tmp_path / "bin", "curl", "#!/bin/sh\necho 'curl: (6) Could not resolve host: astral.sh' >&2\nexit 6\n")
+    done, events, home = _run(tmp_path, "--report", uv=False)
+    assert done.returncode == 1
+    assert events[1]["events"][0]["props"] == {"step": "uv", "ok": False, "seconds": "<10", "error": "network",
+                                               "found": False}
+    assert "does not answer" not in done.stdout
+
+
+def test_the_script_is_plain_posix_sh():
+    for shell in ("dash", "bash"):
+        if shutil.which(shell):
+            assert subprocess.run([shell, "-n", str(SCRIPT)]).returncode == 0
+
+
+def test_a_pick_from_orkcraft_dev_is_said_back_when_the_town_cannot_open_here(tmp_path):
+    done, events, home = _run(tmp_path, "--no-report", "--role", "engineer", "--look", "office")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "To open it on your pick: orkline --role engineer --look office" in done.stdout
+    assert "\x1b[" not in done.stdout                  # no terminal: no Workchief in colour, no escapes in the log
+
+
+def test_orkboard_ends_by_saying_how_to_open_it_and_never_opens_a_town(tmp_path):
+    done, events, home = _run(tmp_path, "--product", "orkboard", "--no-report")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert done.stdout.rstrip().endswith("go to a project and run: orkboard")
+    assert "town" not in done.stdout.lower() and (home / ".local" / "bin" / "orkboard").exists()
+
+
+@pytest.mark.parametrize("args", [("--look", "necropolis"), ("--role",), ("--role", "x; rm -rf ~"), ("--wat",),
+                                  ("--product", "orkcraft"), ("--product", "x; rm"), ("--product",),
+                                  ("--product", "orkboard", "--role", "engineer"),
+                                  ("--product", "orkboard", "--look", "camp")])
+def test_a_wrong_option_stops_before_anything_is_installed(tmp_path, args):
+    done, events, home = _run(tmp_path, "--no-report", *args)
+    assert done.returncode == 2 and not (home / "uv-calls").exists() and not (home / ".orkcraft").exists()
+
+
+def test_the_banner_is_the_warchiefs_sprite_as_drawn_now():
+    pytest.importorskip("PIL")
+    sys.path.insert(0, str(ROOT / "tools"))
+    try:
+        import install_banner
+    finally:
+        sys.path.pop(0)
+    assert install_banner.block() in SCRIPT.read_text(encoding="utf-8")   # run tools/install_banner.py after a redraw
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+def test_the_proxy_writes_the_product_and_the_pick_into_the_installer(tmp_path):
+    (tmp_path / "run.mjs").write_text("""
+const worker = (await import(process.argv[2])).default;
+import { readFileSync } from "node:fs";
+const script = readFileSync(process.argv[3], "utf8");
+globalThis.fetch = async () => new Response(script, { status: 200 });
+const out = {};
+for (const q of ["?role=peon&look=office", "?role=x%22%3B%20rm%20-rf%20~&look=necropolis&product=orkcraft", "",
+                 "?product=orkboard"]) {
+  const res = await worker.fetch(new Request("https://w.example/install.sh" + q), {});
+  out[q] = await res.text();
+}
+console.log(JSON.stringify(out));
+""", encoding="utf-8")
+    got = json.loads(subprocess.run(["node", str(tmp_path / "run.mjs"), (ROOT / "proxy" / "worker.js").as_uri(),
+                                     str(SCRIPT)], capture_output=True, text=True, check=True, timeout=30).stdout)
+    picked = got["?role=peon&look=office"]
+    assert 'ROLE="peon"' in picked and 'LOOK="office"' in picked
+    assert got["?role=x%22%3B%20rm%20-rf%20~&look=necropolis&product=orkcraft"] == got[""] == SCRIPT.read_text(encoding="utf-8")
+    assert 'PRODUCT="orkboard"' in got["?product=orkboard"]
+    for query, product, said in (("?role=peon&look=office", ORKLINE, "orkline --role peon --look office"),
+                                 ("?product=orkboard", ORKBOARD, "go to a project and run: orkboard")):
+        served = tmp_path / f"served-{product.product}.sh"
+        served.write_text(got[query], encoding="utf-8")
+        home, fake = tmp_path / f"home-{product.product}", tmp_path / "bin"
+        home.mkdir()
+        _bin(fake, "uv", UV)
+        done = subprocess.run(["sh", str(served)], env={"HOME": str(home), "PATH": f"{fake}:/usr/bin:/bin",
+                                                        "CI": "1"},
+                              capture_output=True, text=True, timeout=60, start_new_session=True)
+        assert done.returncode == 0, done.stdout + done.stderr
+        assert said in done.stdout and (home / ".local" / "bin" / product.package).exists()
+
+
+def test_every_product_of_the_profiles_installs(tmp_path):
+    for p in ALL:
+        done, events, home = _run(tmp_path / p.product, "--product", p.product, "--no-report")
+        assert done.returncode == 0, done.stdout + done.stderr
+        assert os.access(home / ".local" / "bin" / p.package, os.X_OK)

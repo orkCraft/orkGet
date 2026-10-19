@@ -1,0 +1,19 @@
+{
+  "about": "The installer's events (install.sh, docs/install.md), for every product: its steps, how long each took as a bucket, and the kind of error as a word of a closed list.",
+  "sets": {
+    "methods": ["sh"],
+    "archs": ["x86_64", "arm64", "other"],
+    "steps": ["uv", "python", "package", "version", "window", "agents"],
+    "failed_steps": ["none", "uv", "python", "package", "version", "window", "agents"],
+    "errors": ["disk_full", "permission", "tls", "network", "python_download", "resolve_failed", "build_failed",
+               "git_missing", "unknown"],
+    "sources": ["git", "archive", "local"],
+    "windows": ["native", "browser"]
+  },
+  "events": {
+    "install_started": {"method": "set:methods", "arch": "set:archs", "upgrade": "bool"},
+    "install_step": {"step": "set:steps", "ok": "bool", "seconds": "set:seconds", "error": "set:errors",
+                     "found": "bool", "source": "set:sources", "window": "set:windows", "tools": "list:tools"},
+    "install_finished": {"ok": "bool", "seconds": "set:seconds", "failed_step": "set:failed_steps"}
+  }
+}

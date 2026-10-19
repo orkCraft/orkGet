@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "orkget"
+dynamic = ["version"]          # orkget/__init__.py __version__: the copy's version, in each product's stamp
+description = "orkGet: what installs Orkline and Orkboard, keeps them up to date and, with a yes, says how it goes"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "Vadim Sidoryk" }]
+# None: `orkget/` is the standard library only, so a product can carry it as a copy (docs/specs/41-orkget.md §2).
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-xdist>=3"]
+banner = ["pillow>=10"]                      # tools/install_banner.py redraws the Workchief
+
+[project.urls]
+Homepage = "https://github.com/orkWorks/orkGet"
+Issues = "https://github.com/orkWorks/orkGet/issues"
+
+[tool.setuptools.dynamic]
+version = { attr = "orkget.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["orkget*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

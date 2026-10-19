@@ -1,0 +1,13 @@
+{
+  "about": "What every product shares (docs/usage.md): the buckets a number is sent as, the AI tools, and the products the proxy knows. A rule is a list of values, \"bool\", \"set:<name>\" (a value of that set) or \"list:<name>\" (a list of values of that set). A set's name is unique across common.json, install.json and the product's file.",
+  "products": {
+    "orkline": {"agent": "orkcraft", "dsn": "SENTRY_DSN"},
+    "orkboard": {"agent": "orkboard", "dsn": "SENTRY_DSN_ORKBOARD"}
+  },
+  "sets": {
+    "counts": ["0", "1", "2-5", "6-10", "11+"],
+    "minutes": ["<5", "5-30", "30-120", "120+"],
+    "seconds": ["<10", "10-60", "60-300", "300+"],
+    "tools": ["claude", "agy", "codex", "hermes", "pi", "cursor"]
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "orkcraft-usage",
+  "private": true,
+  "type": "module",
+  "description": "The usage proxy of Orkline and Orkboard (README.md): deployed with `npx wrangler deploy`, wrangler 4 or later"
+}

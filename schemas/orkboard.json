@@ -1,0 +1,10 @@
+{
+  "about": "Orkboard's events (docs/usage.md): only when it opens and closes. Its own events wait until it is published (Orkline's decisions §50.1), each with a spec.",
+  "sets": {
+    "board_faces": ["gui"]
+  },
+  "events": {
+    "app_opened": {"face": "set:board_faces", "tools": "list:tools"},
+    "app_closed": {"minutes": "set:minutes"}
+  }
+}

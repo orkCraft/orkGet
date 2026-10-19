@@ -1,0 +1,52 @@
+name: tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:                       # a new push to a PR cancels its older run
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"   # the oldest Python the products support
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"       # the proxy's tests (import attributes for the schemas' JSON)
+      - name: Install
+        run: python -m pip install -e ".[dev,banner]"
+      - name: Test
+        run: python -m pytest -q -n auto
+
+  installer:                       # install.sh from scratch, each product from its main (docs/install.md)
+    name: installer (${{ matrix.product }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        product: [orkline, orkboard]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install
+        run: sh install.sh --product ${{ matrix.product }} --no-report --no-open
+      - name: It runs
+        run: |
+          if [ "${{ matrix.product }}" = orkline ]; then ~/.local/bin/orkcraft --version; ~/.local/bin/orkcraft usage status
+          else ~/.local/bin/orkboard --version; fi
+      - name: The log
+        if: always()
+        run: cat ~/.orkcraft/install.log

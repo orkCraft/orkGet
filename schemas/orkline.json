@@ -1,0 +1,24 @@
+{
+  "about": "Orkline's events (docs/usage.md). Its tests check each set against its code: types against catalog.TYPES, deeds against growth.DEEDS, autonomy against autonomy.WORDS; tools (common.json) against settings.TOOLS.",
+  "sets": {
+    "faces": ["gui", "tui"],
+    "types": ["pit", "watchtower", "signpost", "mill", "horn", "fields", "barracks", "council", "war_drum", "forest",
+              "scrolls", "mine", "gramophone", "lab", "ux_lab", "lake", "forge", "loot", "crag", "catapult",
+              "town_hall", "workshop", "custom"],
+    "deeds": ["town", "road", "reference", "week", "learned", "mature", "trusted", "night", "mission", "lean"],
+    "stages": [1, 2, 3, 4],
+    "autonomy": ["chains", "clock", "free"]
+  },
+  "events": {
+    "app_opened": {"face": "set:faces", "tools": "list:tools", "buildings": "set:counts", "roads": "set:counts"},
+    "app_closed": {"minutes": "set:minutes"},
+    "building_built": {"type": "set:types"},
+    "building_demolished": {},
+    "road_laid": {},
+    "session_opened": {"harness": "set:tools"},
+    "deed_earned": {"deed": "set:deeds"},
+    "stage_reached": {"stage": "set:stages"},
+    "autonomy_set": {"level": "set:autonomy"},
+    "halted": {}
+  }
+}
