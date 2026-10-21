@@ -48,8 +48,8 @@ changes (`profile.manifest`; each product's `tests/test_updates.py` pins it):
 
 | Product | The list |
 |---|---|
-| Orkline | `https://raw.githubusercontent.com/Orkcraft/orkcraft/main/updates.json` |
-| Orkboard | `https://raw.githubusercontent.com/Orkcraft/orkboard/main/updates.json` (while it has none, nothing is offered) |
+| Orkline | `https://raw.githubusercontent.com/orkWorks/orkLine/main/updates.json` |
+| Orkboard | `https://raw.githubusercontent.com/orkWorks/orkBoard/main/updates.json` (while it has none, nothing is offered) |
 
 What was read is kept in `~/.cache/orkcraft/` (`updates.json` for Orkline, `orkboard-updates.json` for Orkboard).
 How a product publishes a release is in its own `docs/updates.md`: one commit to its `main` that raises its

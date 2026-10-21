@@ -83,5 +83,5 @@ def test_what_every_installed_copy_has_written_in_never_changes():
     assert re.search(r'^name = "orkcraft-usage"$', toml, re.M), "the Worker's name is in every copy's address"
     assert usage.ENDPOINT == "https://orkcraft-usage.vadim-sidoryk.workers.dev/v1/events"
     assert {p.product: p.manifest for p in ALL} == {
-        "orkline": "https://raw.githubusercontent.com/Orkcraft/orkcraft/main/updates.json",
-        "orkboard": "https://raw.githubusercontent.com/Orkcraft/orkboard/main/updates.json"}
+        "orkline": "https://raw.githubusercontent.com/orkWorks/orkLine/main/updates.json",
+        "orkboard": "https://raw.githubusercontent.com/orkWorks/orkBoard/main/updates.json"}

@@ -53,8 +53,8 @@ from Orkline's `docs/specs/` with A's first commit; Orkline's copy points here.
    | `product` · `name` | `orkline` · Orkline | `orkboard` · Orkboard |
    | `package` · `command` | `orkcraft` · `orkcraft` | `orkboard` · `orkboard` |
    | `agent` (the User-Agent; Sentry's release) | `orkcraft` | `orkboard` |
-   | `manifest` | `https://raw.githubusercontent.com/Orkcraft/orkcraft/main/updates.json` | `https://raw.githubusercontent.com/Orkcraft/orkboard/main/updates.json` |
-   | `source` · `extras` | `git+https://github.com/Orkcraft/orkcraft` · `gui` | `git+https://github.com/Orkcraft/orkboard` · `gui` |
+   | `manifest` | `https://raw.githubusercontent.com/orkWorks/orkLine/main/updates.json` | `https://raw.githubusercontent.com/orkWorks/orkBoard/main/updates.json` |
+   | `source` · `extras` | `git+https://github.com/orkWorks/orkLine` · `gui` | `git+https://github.com/orkWorks/orkBoard` · `gui` |
    | `pypi` · `names` | `orkline` · (`orkline`, `orkcraft`) | none · (`orkboard`,) |
    | `manual` | `pipx install --force "orkcraft[gui] @ git+…"` | `uv tool install --force "orkboard[gui] @ git+…"` |
    | `entry` (what a restart runs) | `orkcraft.cli` | `orkboard.gui.board_host` |
@@ -125,7 +125,7 @@ from Orkline's `docs/specs/` with A's first commit; Orkline's copy points here.
 - The updater is today's, with the profile in place of its constants; its behaviour does not change: the policies, the
   ways a copy was installed, the restart, the retry after a day, `ORKCRAFT_NO_UPDATE`, `ORKCRAFT_UPDATE_URL`.
 - **The release lists never move.** An installed copy reads the URL it was released with. Orkline's
-  (`Orkcraft/orkcraft`) answers today through GitHub's redirect to orkWorks/orkLine. Each product's `test_updates.py`
+  (`orkWorks/orkLine`) answers today through GitHub's redirect to orkWorks/orkLine. Each product's `test_updates.py`
   pins `PRODUCT.manifest`, so it cannot change by accident.
 - orkGet's `docs/updates.md` says how a copy updates itself; each product's says how it releases.
 
@@ -156,7 +156,7 @@ from Orkline's `docs/specs/` with A's first commit; Orkline's copy points here.
 - After C. `orkcraft/orkget/` (the copy), `orkcraft/product.py`; `core/updates.py`, `core/usage.py` and
   `core/crashes.py` bound to it (§2.4); `orkcraft usage` and `orkcraft update` unchanged.
 - **`install.sh` stays at the root as a forwarder** for the address `docs/install.md` gave
-  (`raw.githubusercontent.com/Orkcraft/orkcraft/main/install.sh`): it fetches orkGet's and runs it with
+  (`raw.githubusercontent.com/orkWorks/orkLine/main/install.sh`): it fetches orkGet's and runs it with
   `--product orkline` and its own options. The CI's installer job runs the copy:
   `ORKCRAFT_INSTALL_FROM=. sh orkcraft/orkget/install.sh --product orkline --no-report`.
 - `tools/usage-worker/` and `tools/install_banner.py` are deleted (orkGet has them). `docs/install.md`,

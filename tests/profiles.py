@@ -6,16 +6,16 @@ from orkget.profile import Profile
 
 ORKLINE = Profile(
     product="orkline", name="Orkline", package="orkcraft", version="0.3.0", agent="orkcraft",
-    manifest="https://raw.githubusercontent.com/Orkcraft/orkcraft/main/updates.json",
-    source="git+https://github.com/Orkcraft/orkcraft", pypi="orkline", names=("orkline", "orkcraft"),
-    manual='pipx install --force "orkcraft[gui] @ git+https://github.com/Orkcraft/orkcraft"',
+    manifest="https://raw.githubusercontent.com/orkWorks/orkLine/main/updates.json",
+    source="git+https://github.com/orkWorks/orkLine", pypi="orkline", names=("orkline", "orkcraft"),
+    manual='pipx install --force "orkcraft[gui] @ git+https://github.com/orkWorks/orkLine"',
     brew="orkcraft/orkcraft/orkcraft", entry="orkcraft.cli", state="updates.json", legacy_files=True)
 
 ORKBOARD = Profile(
     product="orkboard", name="Orkboard", package="orkboard", version="0.1.0", agent="orkboard",
-    manifest="https://raw.githubusercontent.com/Orkcraft/orkboard/main/updates.json",
-    source="git+https://github.com/Orkcraft/orkboard",
-    manual='uv tool install --force "orkboard[gui] @ git+https://github.com/Orkcraft/orkboard"',
+    manifest="https://raw.githubusercontent.com/orkWorks/orkBoard/main/updates.json",
+    source="git+https://github.com/orkWorks/orkBoard",
+    manual='uv tool install --force "orkboard[gui] @ git+https://github.com/orkWorks/orkBoard"',
     entry="orkboard.gui.board_host", state="orkboard-updates.json")
 
 ALL = (ORKLINE, ORKBOARD)

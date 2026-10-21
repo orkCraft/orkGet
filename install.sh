@@ -57,10 +57,10 @@ done
 case "${PRODUCT:-orkline}" in
   orkline)
     PRODUCT=orkline NAME=Orkline PACKAGE=orkcraft AGENT=orkcraft RUN=orkline
-    REPO="https://github.com/Orkcraft/orkcraft" ;;
+    REPO="https://github.com/orkWorks/orkLine" ;;
   orkboard)
     PRODUCT=orkboard NAME=Orkboard PACKAGE=orkboard AGENT=orkboard RUN=orkboard
-    REPO="https://github.com/Orkcraft/orkboard" ;;
+    REPO="https://github.com/orkWorks/orkBoard" ;;
   *) echo "install: --product is orkline or orkboard" >&2; exit 2 ;;
 esac
 EXTRAS="gui"
