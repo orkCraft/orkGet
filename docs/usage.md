@@ -1,6 +1,6 @@
 # Anonymous usage stats
 
-Orkline and Orkboard can share which of their features are used, so we know what to make better. It is **off until
+Orkline, Orkboard and OrkWiki can share which of their features are used, so we know what to make better. It is **off until
 you say yes**, and **one answer covers every product on this computer**: the installer asks once, or the first
 product you open, and no product asks again. Each product's Settings, or `orkcraft usage on|off|status`, change it at
 any time, for all of them (the answer lives in `~/.config/orkcraft/`, which they all read).
@@ -32,6 +32,13 @@ go as buckets (`0`, `1`, `2-5`, `6-10`, `11+`), never as exact counts.
 | `app_opened` | the window opens | `face` (gui), `tools` |
 | `app_closed` | the window closes | `minutes` it was open |
 
+### OrkWiki ([schemas/orkwiki.json](../schemas/orkwiki.json))
+
+| Event | When | Properties |
+|---|---|---|
+| `app_opened` | the window opens | `face` (gui), `tools` |
+| `app_closed` | the window closes | `minutes` it was open |
+
 ### The installer, for every product ([schemas/install.json](../schemas/install.json), [install.md](install.md))
 
 | Event | When | Properties |
@@ -40,7 +47,7 @@ go as buckets (`0`, `1`, `2-5`, `6-10`, `11+`), never as exact counts.
 | `install_step` | each of its steps ends | `step` (uv · python · package · version · window · agents), `ok`, `seconds` (`<10` · `10-60` · `60-300` · `300+`); when it failed `error`, a kind: disk_full · permission · tls · network · python_download · resolve_failed · build_failed · git_missing · unknown; and per step `found` (uv was there), `source` (git · archive · local), `window` (native · browser), `tools` (claude · codex · agy found) |
 | `install_finished` | the installer ends | `ok`, `seconds`, `failed_step` |
 
-Every batch also carries the product (orkline · orkboard), a random install id (drawn when you say yes, the same for
+Every batch also carries the product (orkline · orkboard · orkwiki), a random install id (drawn when you say yes, the same for
 every product on this computer, forgotten when you say no), when this window was opened, the product's version, the
 OS (darwin · linux · windows) and the Python version.
 
@@ -62,7 +69,7 @@ Whatever you answered, nothing is collected while `DO_NOT_TRACK=1` or `ORKCRAFT_
 
 ## See it for yourself
 
-`ORKCRAFT_USAGE_DEBUG=1 orkcraft` (or `orkboard`) prints every batch to the terminal instead of sending it.
+`ORKCRAFT_USAGE_DEBUG=1 orkcraft` (`orkboard`, `orkwiki`) prints every batch to the terminal instead of sending it.
 
 ## For the maintainers
 

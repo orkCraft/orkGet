@@ -1,0 +1,10 @@
+{
+  "about": "OrkWiki's events (docs/usage.md): only when it opens and closes. Its own events wait until it is published, each with a spec.",
+  "sets": {
+    "wiki_faces": ["gui"]
+  },
+  "events": {
+    "app_opened": {"face": "set:wiki_faces", "tools": "list:tools"},
+    "app_closed": {"minutes": "set:minutes"}
+  }
+}

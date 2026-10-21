@@ -22,7 +22,8 @@ from Orkline's `docs/specs/` with A's first commit; Orkline's copy points here.
 ## 0. The words
 - **orkGet**: the repository, and `orkget` its Python package: what puts a product on a machine, keeps it up to date
   and, with a yes, says how the install and the runs go. **Not a command**: nobody installs or runs `orkget` (§1).
-- **a product**: Orkline (`orkline`) or Orkboard (`orkboard`). Its **profile** (`orkget.Profile`): the few values in
+- **a product**: Orkline (`orkline`), Orkboard (`orkboard`) or OrkWiki (`orkwiki`, added 21 October: its case in
+  `install.sh`, `schemas/orkwiki.json`, its Sentry DSN `SENTRY_DSN_ORKWIKI`, its profile in the tests). Its **profile** (`orkget.Profile`): the few values in
   which the products differ (§2).
 - **the copy**: orkGet's `orkget/`, `schemas/` and `install.sh`, put in a product's package (`orkcraft/orkget/`,
   `orkboard/orkget/`), stamped and never edited there, as orkUI's copy is (spec 40 §2).

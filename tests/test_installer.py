@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 from orkget import consent, profile, usage
-from profiles import ALL, ORKBOARD, ORKLINE
+from profiles import ALL, ORKBOARD, ORKLINE, ORKWIKI
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "install.sh"
@@ -62,7 +62,7 @@ def _run(tmp_path: Path, *args: str, uv: bool = True, env: dict | None = None, s
     done = subprocess.run(["sh", str(script), *args], env={**base, **(env or {})}, capture_output=True,
                           text=True, timeout=60, start_new_session=True)
     events = [json.loads(line.split(": ", 1)[1]) for line in done.stderr.splitlines()
-              if line.split(" usage: ", 1)[0] in ("orkcraft", "orkboard") and " usage: " in line]
+              if line.split(" usage: ", 1)[0] in ("orkcraft", "orkboard", "orkwiki") and " usage: " in line]
     return done, events, home
 
 
@@ -175,10 +175,19 @@ def test_orkboard_ends_by_saying_how_to_open_it_and_never_opens_a_town(tmp_path)
     assert "town" not in done.stdout.lower() and (home / ".local" / "bin" / "orkboard").exists()
 
 
+def test_orkwiki_ends_by_saying_how_to_open_it_and_never_opens_a_town(tmp_path):
+    done, events, home = _run(tmp_path, "--product", "orkwiki", "--no-report")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert done.stdout.rstrip().endswith("go to a project and run: orkwiki")
+    assert "town" not in done.stdout.lower() and (home / ".local" / "bin" / "orkwiki").exists()
+
+
 @pytest.mark.parametrize("args", [("--look", "necropolis"), ("--role",), ("--role", "x; rm -rf ~"), ("--wat",),
                                   ("--product", "orkcraft"), ("--product", "x; rm"), ("--product",),
                                   ("--product", "orkboard", "--role", "engineer"),
-                                  ("--product", "orkboard", "--look", "camp")])
+                                  ("--product", "orkboard", "--look", "camp"),
+                                  ("--product", "orkwiki", "--role", "engineer"),
+                                  ("--product", "orkwiki", "--look", "office")])
 def test_a_wrong_option_stops_before_anything_is_installed(tmp_path, args):
     done, events, home = _run(tmp_path, "--no-report", *args)
     assert done.returncode == 2 and not (home / "uv-calls").exists() and not (home / ".orkcraft").exists()
@@ -203,7 +212,7 @@ const script = readFileSync(process.argv[3], "utf8");
 globalThis.fetch = async () => new Response(script, { status: 200 });
 const out = {};
 for (const q of ["?role=peon&look=office", "?role=x%22%3B%20rm%20-rf%20~&look=necropolis&product=orkcraft", "",
-                 "?product=orkboard"]) {
+                 "?product=orkboard", "?product=orkwiki"]) {
   const res = await worker.fetch(new Request("https://w.example/install.sh" + q), {});
   out[q] = await res.text();
 }
@@ -215,8 +224,10 @@ console.log(JSON.stringify(out));
     assert 'ROLE="peon"' in picked and 'LOOK="office"' in picked
     assert got["?role=x%22%3B%20rm%20-rf%20~&look=necropolis&product=orkcraft"] == got[""] == SCRIPT.read_text(encoding="utf-8")
     assert 'PRODUCT="orkboard"' in got["?product=orkboard"]
+    assert 'PRODUCT="orkwiki"' in got["?product=orkwiki"]
     for query, product, said in (("?role=peon&look=office", ORKLINE, "orkline --role peon --look office"),
-                                 ("?product=orkboard", ORKBOARD, "go to a project and run: orkboard")):
+                                 ("?product=orkboard", ORKBOARD, "go to a project and run: orkboard"),
+                                 ("?product=orkwiki", ORKWIKI, "go to a project and run: orkwiki")):
         served = tmp_path / f"served-{product.product}.sh"
         served.write_text(got[query], encoding="utf-8")
         home, fake = tmp_path / f"home-{product.product}", tmp_path / "bin"

@@ -10,7 +10,7 @@ orkcraft / orkboard ──POST /v1/events──▶ Worker ──▶ Amplitude HT
                       or orkboard/x.y          · keeps only the events and properties of schemas/
                                                · at most 30 batches a minute per install
                                                · drops the person's IP address
-                    ──POST /v1/crash───▶ Worker ──▶ Sentry: Orkline's project (SENTRY_DSN), Orkboard's (SENTRY_DSN_ORKBOARD)
+                    ──POST /v1/crash───▶ Worker ──▶ Sentry: Orkline's project (SENTRY_DSN), Orkboard's (SENTRY_DSN_ORKBOARD), OrkWiki's (SENTRY_DSN_ORKWIKI)
 curl | sh           ──GET /install.sh──▶ Worker ──▶ orkGet's install.sh from main, ?product=…&role=…&look=… written in
 ```
 
@@ -53,6 +53,7 @@ Worker does not know is dropped.
    npx wrangler secret put AMPLITUDE_API_KEY       # paste the API Key: it is stored encrypted in Cloudflare
    npx wrangler secret put SENTRY_DSN              # Orkline's DSN
    npx wrangler secret put SENTRY_DSN_ORKBOARD     # Orkboard's DSN
+   npx wrangler secret put SENTRY_DSN_ORKWIKI      # OrkWiki's DSN
    npx wrangler deploy                             # → https://orkcraft-usage.<account>.workers.dev
    ```
 

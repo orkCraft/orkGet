@@ -1,6 +1,6 @@
 """orkGet: what puts a product on a machine, keeps it up to date and, with a yes, says how it goes.
 
-A product (Orkline, Orkboard) never depends on this package: it carries a copy of it, `<package>/orkget/`,
+A product (Orkline, Orkboard, OrkWiki) never depends on this package: it carries a copy of it, `<package>/orkget/`,
 stamped and never edited there (`stamp.py`, docs/specs/41-orkget.md §2). The copy imports only the
 standard library and itself; the product hands in what differs, its profile:
 

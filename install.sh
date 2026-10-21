@@ -1,9 +1,10 @@
 #!/bin/sh
-# The installer of Orkline and Orkboard for macOS and Linux (docs/install.md):
+# The installer of Orkline, Orkboard and OrkWiki for macOS and Linux (docs/install.md):
 #
 #   curl -fsSL https://orkcraft.dev/install.sh | sh                          # Orkline
 #   curl -fsSL https://orkcraft.dev/install/<role>/<look> | sh               # Orkline, opening on that class and look
 #   curl -fsSL https://orkcraft.dev/install.sh | sh -s -- --product orkboard # Orkboard
+#   curl -fsSL https://orkcraft.dev/install.sh | sh -s -- --product orkwiki  # OrkWiki
 #
 # It puts uv in place (when it is not there yet), a Python for the product, and the product itself as a
 # uv tool, then looks for the window toolkit and the AI tools. Each step is written to
@@ -35,7 +36,7 @@ PRODUCT=""
 ROLE=""
 LOOK=""
 OPEN=1                                        # open Orkline's town at the end, when there is a terminal
-USAGE="sh install.sh [--product orkline|orkboard] [--report | --no-report] [--role ROLE] [--look camp|office] [--no-open]"
+USAGE="sh install.sh [--product orkline|orkboard|orkwiki] [--report | --no-report] [--role ROLE] [--look camp|office] [--no-open]"
 while [ $# -gt 0 ]; do
   case "$1" in
     --report) REPORT=1 ;;
@@ -61,7 +62,10 @@ case "${PRODUCT:-orkline}" in
   orkboard)
     PRODUCT=orkboard NAME=Orkboard PACKAGE=orkboard AGENT=orkboard RUN=orkboard
     REPO="https://github.com/Orkcraft/orkboard" ;;
-  *) echo "install: --product is orkline or orkboard" >&2; exit 2 ;;
+  orkwiki)
+    PRODUCT=orkwiki NAME=OrkWiki PACKAGE=orkwiki AGENT=orkwiki RUN=orkwiki
+    REPO="https://github.com/orkWorks/orkWiki" ;;
+  *) echo "install: --product is orkline, orkboard or orkwiki" >&2; exit 2 ;;
 esac
 EXTRAS="gui"
 case "$LOOK" in ""|camp|office) ;; *) echo "install: --look is camp or office" >&2; exit 2 ;; esac

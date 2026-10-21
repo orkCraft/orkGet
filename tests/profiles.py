@@ -18,4 +18,11 @@ ORKBOARD = Profile(
     manual='uv tool install --force "orkboard[gui] @ git+https://github.com/Orkcraft/orkboard"',
     entry="orkboard.gui.board_host", state="orkboard-updates.json")
 
-ALL = (ORKLINE, ORKBOARD)
+ORKWIKI = Profile(
+    product="orkwiki", name="OrkWiki", package="orkwiki", version="0.1.0", agent="orkwiki",
+    manifest="https://raw.githubusercontent.com/orkWorks/orkWiki/main/updates.json",
+    source="git+https://github.com/orkWorks/orkWiki",
+    manual='uv tool install --force "orkwiki[gui] @ git+https://github.com/orkWorks/orkWiki"',
+    entry="orkwiki.gui.wiki_host", state="orkwiki-updates.json")
+
+ALL = (ORKLINE, ORKBOARD, ORKWIKI)

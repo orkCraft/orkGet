@@ -38,7 +38,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        product: [orkline, orkboard]
+        product: [orkline, orkboard, orkwiki]
     steps:
       - uses: actions/checkout@v4
       - name: Install
@@ -46,7 +46,7 @@ jobs:
       - name: It runs
         run: |
           if [ "${{ matrix.product }}" = orkline ]; then ~/.local/bin/orkcraft --version; ~/.local/bin/orkcraft usage status
-          else ~/.local/bin/orkboard --version; fi
+          else ~/.local/bin/${{ matrix.product }} --version; fi
       - name: The log
         if: always()
         run: cat ~/.orkcraft/install.log

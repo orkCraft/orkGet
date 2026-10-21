@@ -1,4 +1,4 @@
-"""A product's profile (docs/specs/41-orkget.md §2): the few values in which Orkline and Orkboard differ.
+"""A product's profile (docs/specs/41-orkget.md §2): the few values in which Orkline, Orkboard and OrkWiki differ.
 
 The product makes it once, in `<package>/product.py`, and hands it to its copy before anything else runs:
 
@@ -32,7 +32,7 @@ def getenv(name: str, default: str = "") -> str:
 
 @dataclass(frozen=True)
 class Profile:
-    product: str                       # orkline · orkboard: a body's `product`, the schema's file name
+    product: str                       # orkline · orkboard · orkwiki: a body's `product`, the schema's file name
     name: str                          # Orkline: what a person reads
     package: str                       # orkcraft: the import name, the distribution from git, brew's keg
     version: str                       # the product's __version__
