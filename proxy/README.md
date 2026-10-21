@@ -1,20 +1,22 @@
 # The usage proxy
 
-A Cloudflare Worker between Orkline and Orkboard and Amplitude (usage stats, [docs/usage.md](../docs/usage.md)) and
+A Cloudflare Worker between Orkline, Orkboard and Orkwatch and Amplitude (usage stats, [docs/usage.md](../docs/usage.md)) and
 Sentry (crash reports, [docs/crashes.md](../docs/crashes.md)). It also hands out the installer
 ([docs/install.md](../docs/install.md)).
 
 ```
-orkcraft / orkboard ──POST /v1/events──▶ Worker ──▶ Amplitude HTTP API v2 (US), one project, `product` on each event
+orkcraft, orkboard,
+orkwatch            ──POST /v1/events──▶ Worker ──▶ Amplitude HTTP API v2 (US), one project, `product` on each event
                       User-Agent: orkcraft/x.y · holds AMPLITUDE_API_KEY (a Worker secret)
-                      or orkboard/x.y          · keeps only the events and properties of schemas/
-                                               · at most 30 batches a minute per install
+                      (or orkboard/x.y,        · keeps only the events and properties of schemas/
+                       orkwatch/x.y)           · at most 30 batches a minute per install
                                                · drops the person's IP address
-                    ──POST /v1/crash───▶ Worker ──▶ Sentry: Orkline's project (SENTRY_DSN), Orkboard's (SENTRY_DSN_ORKBOARD)
+                    ──POST /v1/crash───▶ Worker ──▶ Sentry, a project per product: SENTRY_DSN (Orkline's),
+                                                    SENTRY_DSN_ORKBOARD, SENTRY_DSN_ORKWATCH
 curl | sh           ──GET /install.sh──▶ Worker ──▶ orkGet's install.sh from main, ?product=…&role=…&look=… written in
 ```
 
-A body says its `product` (orkline · orkboard); one without it is Orkline's, as every copy released before orkGet
+A body says its `product` (orkline · orkboard · orkwatch); one without it is Orkline's, as every copy released before orkGet
 sends it. The repositories hold only the proxy's address (`orkget/usage.py` `ENDPOINT`), never a key. Whoever runs the
 proxy can change the analytics behind it without a release of a product.
 
@@ -53,6 +55,7 @@ Worker does not know is dropped.
    npx wrangler secret put AMPLITUDE_API_KEY       # paste the API Key: it is stored encrypted in Cloudflare
    npx wrangler secret put SENTRY_DSN              # Orkline's DSN
    npx wrangler secret put SENTRY_DSN_ORKBOARD     # Orkboard's DSN
+   npx wrangler secret put SENTRY_DSN_ORKWATCH     # Orkwatch's DSN
    npx wrangler deploy                             # → https://orkcraft-usage.<account>.workers.dev
    ```
 
@@ -84,7 +87,7 @@ Worker does not know is dropped.
      always pass it on: its absence proves nothing.
    - A change to `wrangler.toml` or `schemas/` counts only after `npx wrangler deploy`.
 
-Releases are `<agent>@<version>` (`orkcraft@0.3.0`, `orkboard@0.1.0`), so Sentry → Releases shows the crash-free
+Releases are `<agent>@<version>` (`orkcraft@0.3.0`, `orkboard@0.1.0`, `orkwatch@0.1.0`), so Sentry → Releases shows the crash-free
 sessions of each version. A git checkout reports as environment `checkout`, an installed copy as `production`.
 
 ## The installer

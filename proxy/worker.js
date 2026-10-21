@@ -17,8 +17,9 @@ import common from "../schemas/common.json" with { type: "json" };
 import install from "../schemas/install.json" with { type: "json" };
 import orkline from "../schemas/orkline.json" with { type: "json" };
 import orkboard from "../schemas/orkboard.json" with { type: "json" };
+import orkwatch from "../schemas/orkwatch.json" with { type: "json" };
 
-const SCHEMAS = { orkline, orkboard };
+const SCHEMAS = { orkline, orkboard, orkwatch };
 const PRODUCTS = common.products;                  // {product: {agent, dsn}}
 const AGENTS = Object.values(PRODUCTS).map((p) => `${p.agent}/`);
 
@@ -112,7 +113,7 @@ async function batch(request, env) {
 }
 
 // -- crash reports (docs/crashes.md): the product's own small form, checked field by field, then written
-// as a Sentry envelope with the key this Worker holds for that product (SENTRY_DSN, SENTRY_DSN_ORKBOARD) ----
+// as a Sentry envelope with the key this Worker holds for that product (SENTRY_DSN, SENTRY_DSN_ORKBOARD, SENTRY_DSN_ORKWATCH) ----
 
 const WHERE = ["unhandled", "thread", "asyncio", "command", "clock", "window"];
 const STATUSES = ["ok", "exited", "crashed", "abnormal"];

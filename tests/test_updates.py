@@ -15,7 +15,7 @@ from types import SimpleNamespace
 import pytest
 
 from orkget import profile, updates
-from profiles import ORKBOARD, ORKLINE
+from profiles import ALL, ORKBOARD, ORKLINE
 
 
 def manifest(*rels: tuple[str, bool]) -> dict:
@@ -91,7 +91,7 @@ def test_what_installs_by_itself_follows_the_policy(product):
 def test_each_product_reads_its_own_list_and_keeps_its_own_cache(product, tmp_path):
     assert updates.url() == product.manifest
     assert updates.state_path() == tmp_path / "cache" / "orkcraft" / product.state
-    assert {ORKLINE.state, ORKBOARD.state} == {"updates.json", "orkboard-updates.json"}
+    assert {p.state for p in ALL} == {"updates.json", "orkboard-updates.json", "orkwatch-updates.json"}
 
 
 # -- reading the list ---------------------------------------------------------------------------

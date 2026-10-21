@@ -1,12 +1,13 @@
 # orkGet
 
-What installs **Orkline** and **Orkboard**, keeps them up to date and, with a yes, says how the install and the
+What installs **Orkline**, **Orkboard** and **Orkwatch**, keeps them up to date and, with a yes, says how the install and the
 runs go: one installer, one updater, one place for the usage stats and the crash reports, and the proxy behind them
-([docs/specs/41-orkget.md](docs/specs/41-orkget.md)).
+([docs/specs/41-orkget.md](docs/specs/41-orkget.md); the third product, Orkwatch: [docs/specs/42-orkwatch.md](docs/specs/42-orkwatch.md)).
 
 ```bash
 curl -fsSL https://orkcraft.dev/install.sh | sh                            # Orkline
 curl -fsSL https://orkcraft.dev/install.sh | sh -s -- --product orkboard   # Orkboard
+curl -fsSL https://orkcraft.dev/install.sh | sh -s -- --product orkwatch   # Orkwatch
 ```
 
 | | |

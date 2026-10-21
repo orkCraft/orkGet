@@ -1,13 +1,13 @@
 # orkGet — notes for contributors and agents
 
-orkGet installs Orkline and Orkboard, keeps them up to date and, with a yes, says how the install and the runs go
+orkGet installs Orkline, Orkboard and Orkwatch, keeps them up to date and, with a yes, says how the install and the runs go
 (docs/specs/41-orkget.md). It serves products; it is never one: no command people run, no window, no package a
 product depends on.
 
 ## Wording
 
 - In everything a person reads — the installer's lines, the docs, the README — write **ork** / **orks** / **Ork** and
-  **orkestration** / **orkestrate**, never "orc" or "orchestration". The products are **Orkline** and **Orkboard**.
+  **orkestration** / **orkestrate**, never "orc" or "orchestration". The products are **Orkline**, **Orkboard** and **Orkwatch**.
 - Code keeps its names: identifiers, file names, dict keys, event ids and config values stay as they are. The state
   keeps Orkline's names for every product, so the products read the same settings and the installed copies keep
   working: `~/.config/orkcraft/`, `~/.cache/orkcraft/`, `~/.orkcraft/`, the `ORKCRAFT_*` variables, the User-Agent

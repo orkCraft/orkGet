@@ -90,6 +90,25 @@ out.installerCalls = sent();
     assert started["event_properties"] == {"method": "sh", "arch": "arm64", "upgrade": False, "product": "orkline"}
 
 
+def test_orkwatch_sends_only_its_own_events_and_the_installers(tmp_path):
+    out = _node(tmp_path, """
+const env = { AMPLITUDE_API_KEY: "key", SENTRY_DSN: "https://pubkey@o1.ingest.us.sentry.io/42",
+              SENTRY_DSN_ORKWATCH: "https://wkey@o3.ingest.de.sentry.io/9" };
+out.status = await send("/v1/events", "orkwatch/0.1.0", base({ product: "orkwatch", app_version: "0.1.0", events: [
+  { event: "app_opened", props: { face: "gui", tools: ["claude"], buildings: "2-5" } },
+  { event: "app_closed", props: { minutes: "5-30" } },
+  { event: "building_built", props: { type: "lake" } },
+  { event: "install_finished", props: { ok: true, failed_step: "none" } }] }), env);
+out.calls = sent();
+""")
+    assert out["status"] == 204
+    events = json.loads(out["calls"][0]["body"])["events"]
+    assert [(e["event_type"], e["event_properties"]) for e in events] == [
+        ("app_opened", {"face": "gui", "tools": ["claude"], "product": "orkwatch"}),
+        ("app_closed", {"minutes": "5-30", "product": "orkwatch"}),
+        ("install_finished", {"ok": True, "failed_step": "none", "product": "orkwatch"})]
+
+
 def test_anything_not_a_products_is_refused(tmp_path):
     out = _node(tmp_path, """
 const env = { AMPLITUDE_API_KEY: "key" };
@@ -167,3 +186,20 @@ out.down = await answer(502);
 out.badKey = await answer(400);
 """)
     assert (out["busy"], out["down"], out["badKey"]) == (503, 503, 204)
+
+
+def test_orkwatchs_crashes_go_to_its_own_project_or_nowhere(tmp_path):
+    out = _node(tmp_path, CRASH + """
+const body = base({ product: "orkwatch", app_version: "0.1.0", items: [event("orkwatch/gui/watch_host.py"), session] });
+out.status = await send("/v1/crash", "orkwatch/0.1.0", body,
+  { SENTRY_DSN: "https://pubkey@o1.ingest.us.sentry.io/42", SENTRY_DSN_ORKWATCH: "https://wkey@o3.ingest.de.sentry.io/9" });
+out.calls = sent();
+out.without = await send("/v1/crash", "orkwatch/0.1.0", body, { SENTRY_DSN: "https://pubkey@o1.ingest.us.sentry.io/42" });
+out.withoutCalls = sent();
+""")
+    assert out["status"] == 204
+    (call,) = out["calls"]
+    assert call["url"] == "https://o3.ingest.de.sentry.io/api/9/envelope/" and "sentry_key=wkey" in call["auth"]
+    event = _envelope(call["body"])[2]
+    assert event["release"] == "orkwatch@0.1.0"
+    assert out["without"] == 204 and out["withoutCalls"] == []      # no DSN of Orkwatch's: dropped, never another's

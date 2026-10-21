@@ -1,0 +1,10 @@
+{
+  "about": "Orkwatch's events (docs/usage.md): only when it opens and closes, as Orkboard's. Never a message, a source's name, an address or a rule's text; its own events wait until it is published, each with a spec (docs/specs/42-orkwatch.md §9).",
+  "sets": {
+    "watch_faces": ["gui"]
+  },
+  "events": {
+    "app_opened": {"face": "set:watch_faces", "tools": "list:tools"},
+    "app_closed": {"minutes": "set:minutes"}
+  }
+}

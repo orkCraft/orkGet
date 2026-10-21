@@ -27,7 +27,7 @@ def test_a_copy_holds_the_modules_the_schemas_and_the_installer_and_is_stamped(t
     assert made["from"] == "orkWorks/orkGet" and made["version"] == __import__("orkget").__version__
     assert {"updates.py", "usage.py", "crashes.py", "consent.py", "profile.py", "stamp.py", "__init__.py",
             "install.sh", "schemas/common.json", "schemas/install.json", "schemas/orkline.json",
-            "schemas/orkboard.json"} <= set(made["files"])
+            "schemas/orkboard.json", "schemas/orkwatch.json"} <= set(made["files"])
     assert json.loads((into / "ORKGET.json").read_text()) == made
     assert stamp.problems(into) == []
     assert (into / "install.sh").read_bytes() == (ROOT / "install.sh").read_bytes()
