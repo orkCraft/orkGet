@@ -15,7 +15,7 @@ from types import SimpleNamespace
 import pytest
 
 from orkget import profile, updates
-from profiles import ORKBOARD, ORKLINE
+from profiles import ALL, ORKBOARD, ORKLINE, ORKMINE
 
 
 def manifest(*rels: tuple[str, bool]) -> dict:
@@ -91,7 +91,7 @@ def test_what_installs_by_itself_follows_the_policy(product):
 def test_each_product_reads_its_own_list_and_keeps_its_own_cache(product, tmp_path):
     assert updates.url() == product.manifest
     assert updates.state_path() == tmp_path / "cache" / "orkcraft" / product.state
-    assert {ORKLINE.state, ORKBOARD.state} == {"updates.json", "orkboard-updates.json"}
+    assert {p.state for p in ALL} == {"updates.json", "orkboard-updates.json", "orkmine-updates.json"}
 
 
 # -- reading the list ---------------------------------------------------------------------------
@@ -191,6 +191,11 @@ def test_orkline_upgrades_from_pypi_by_its_name_there(monkeypatch, tmp_path):
 def test_orkboard_is_never_the_pypi_copy():
     profile.use(ORKBOARD)
     assert ORKBOARD.pypi == "" and not updates._from_pypi()
+
+
+def test_a_product_played_in_the_terminal_is_reinstalled_without_extras():
+    assert ORKMINE.manual == 'uv tool install --force "orkmine @ git+https://github.com/orkWorks/orkMine"'
+    assert ORKBOARD.manual == 'uv tool install --force "orkboard[gui] @ git+https://github.com/orkWorks/orkBoard"'
 
 
 def test_homebrew_upgrades_with_brew_and_restarts_under_opt(tmp_path, monkeypatch):

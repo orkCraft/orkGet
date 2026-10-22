@@ -12,6 +12,12 @@ release 0.3.0 (Thu 22 October), whose clean-install check (E1, Wed 21 October) r
 Wording: CLAUDE.md. **This file is the contract**; the rest is the builder's choice inside its files. It moved here
 from Orkline's `docs/specs/` with A's first commit; Orkline's copy points here.
 
+**A third product, 22 October:** Orkmine ([orkWorks/orkMine](https://github.com/orkWorks/orkMine), its spec 01 §15),
+a game played in the terminal, joins as this spec says, with what its profile changes: no extras (`extras=""`), so
+the installer installs `orkmine` without `[gui]` and skips the `window` step, and its `face` is `tui`
+(`schemas/orkmine.json`, the proxy's crash tag). The owner creates its Sentry project and sets `SENTRY_DSN_ORKMINE`
+before the proxy is deployed; orkGet's installer job takes it once orkMine's `main` has a package.
+
 | part | builds | repository | files (and their tests) |
 |---|---|---|---|
 | **A. orkGet** | §1–§6 | orkWorks/orkGet (new) | `install.sh`, `orkget/` (`__init__.py`, `profile.py`, `updates.py`, `consent.py`, `usage.py`, `crashes.py`, `stamp.py`), `schemas/` (`common.json`, `install.json`, `orkline.json`, `orkboard.json`), `proxy/` (`worker.js`, `wrangler.toml`, `README.md`), `tools/install_banner.py`, `docs/` (`install.md`, `usage.md`, `crashes.md`, `updates.md`, this spec), `CLAUDE.md`, `README.md`, `LICENSE`, `NOTICE`, `.github/workflows/tests.yml`; `tests/test_updates.py`, `test_usage.py`, `test_crashes.py`, `test_installer.py`, `test_schemas.py`, `test_proxy.py`, `test_stamp.py` |

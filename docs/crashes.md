@@ -1,12 +1,12 @@
 # Crash reports
 
-When something breaks in Orkline or Orkboard, a report says **where in the product's own code** it broke, so it can
-be fixed. Crash reports share one answer with the [usage stats](usage.md): **off until you say yes**, one answer for
-every product on this computer, in the installer, a product's window or its Settings (`orkcraft usage on|off`).
+When something breaks in Orkline, Orkboard or Orkmine, a report says **where in the product's own code** it broke, so
+it can be fixed. Crash reports share one answer with the [usage stats](usage.md): **off until you say yes**, one answer
+for every product on this computer, in the installer, a product's window or its Settings (`orkcraft usage on|off`).
 
 ## What a report holds
 
-- the product (orkline · orkboard);
+- the product (orkline · orkboard · orkmine);
 - the error's type (`KeyError`, `TypeError`…) and its message with everything that could be yours taken out: paths,
   URLs, e-mail addresses and anything in quotes become `<path>`, `<url>`, `<email>`, `'…'`;
 - the stack: for each line, the file **in the product** (`orkcraft/gui/host.py`, `orkboard/gui/board_host.py`) or the
@@ -34,7 +34,7 @@ we see the share of runs of each version that ended well.
 To the products' own proxy, the same Cloudflare Worker as the usage stats ([proxy/](../proxy/), `POST /v1/crash`). It
 checks every field again, keeps only the ones above, drops your IP address and passes the report to
 [Sentry](https://sentry.io/), in its EU data centre (Frankfurt): a project per product, its releases
-`orkcraft@<version>` for Orkline and `orkboard@<version>` for Orkboard.
+`orkcraft@<version>` for Orkline, `orkboard@<version>` for Orkboard and `orkmine@<version>` for Orkmine.
 
 ## On your machine
 

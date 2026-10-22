@@ -38,7 +38,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        product: [orkline, orkboard]
+        product: [orkline, orkboard]   # orkmine joins once its main has a package (its spec 01 §15)
     steps:
       - uses: actions/checkout@v4
       - name: Install

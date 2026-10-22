@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 from orkget import consent, profile, usage
-from profiles import ALL, ORKBOARD, ORKLINE
+from profiles import ALL, ORKBOARD, ORKLINE, ORKMINE
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "install.sh"
@@ -33,7 +33,7 @@ case "$1 $2" in
   "python install") ;;
   "tool install")
     if [ -n "${FAKE_FAIL:-}" ]; then echo "$FAKE_FAIL" >&2; exit 2; fi
-    name="$(printf '%%s' "$6" | sed 's/\\[.*//')"
+    name="$(printf '%%s' "$6" | sed 's/[[ ].*//')"
     mkdir -p "$HOME/.local/bin"
     cat > "$HOME/.local/bin/$name" <<'EOF'
 %s
@@ -62,7 +62,7 @@ def _run(tmp_path: Path, *args: str, uv: bool = True, env: dict | None = None, s
     done = subprocess.run(["sh", str(script), *args], env={**base, **(env or {})}, capture_output=True,
                           text=True, timeout=60, start_new_session=True)
     events = [json.loads(line.split(": ", 1)[1]) for line in done.stderr.splitlines()
-              if line.split(" usage: ", 1)[0] in ("orkcraft", "orkboard") and " usage: " in line]
+              if line.split(" usage: ", 1)[0] in {p.agent for p in ALL} and " usage: " in line]
     return done, events, home
 
 
@@ -72,6 +72,15 @@ def _names(events):
 
 def _as(product: profile.Profile) -> tuple[str, ...]:
     return () if product is ORKLINE else ("--product", product.product)
+
+
+def _spec(product: profile.Profile) -> str:
+    """What `uv tool install` is given: the window's packages only for a product with a window."""
+    return f"{product.package}[{product.extras}]" if product.extras else product.package
+
+
+PROJECT = "open a new terminal, go to a project and run: "
+NEXT = {"orkline": PROJECT, "orkboard": PROJECT, "orkmine": "open a new terminal and run: "}  # Orkmine: no project
 
 
 @pytest.mark.parametrize("args, env", [((), {}), (("--no-report",), {}), (("--report",), {"DO_NOT_TRACK": "1"}),
@@ -88,9 +97,10 @@ def test_nothing_is_sent_without_a_yes_or_where_tracking_is_off(product, tmp_pat
 def test_a_yes_sends_each_step_as_the_proxy_knows_it_and_hands_the_id_to_the_product(product, tmp_path):
     done, events, home = _run(tmp_path, *_as(product), "--report")
     assert done.returncode == 0, done.stdout + done.stderr
+    window = [("install_step", "window")] if product.extras else []   # a product played in the terminal has none
     assert _names(events) == [("install_started", None), ("install_step", "uv"), ("install_step", "python"),
                               ("install_step", "package"), ("install_step", "version"),
-                              ("install_step", "window"), ("install_step", "agents"), ("install_finished", None)]
+                              *window, ("install_step", "agents"), ("install_finished", None)]
     ids = {b["install_id"] for b in events}
     assert len(ids) == 1 and consent.ID.fullmatch(ids.pop() or "")
     for b in events:                     # every property is one the copy's list and the proxy's allow
@@ -99,13 +109,13 @@ def test_a_yes_sends_each_step_as_the_proxy_knows_it_and_hands_the_id_to_the_pro
         assert b["app_version"] == "installer-2" and b["os"] in ("linux", "darwin")
         assert b["product"] == product.product
     assert done.stderr.startswith(f"{product.agent} usage: "), done.stderr[:200]   # nothing else on stderr
-    agents = events[6]["events"][0]["props"]
+    agents = events[-2]["events"][0]["props"]
     assert agents["tools"] == ["claude"]
     assert events[-1]["events"][0]["props"]["ok"] is True
     assert (home / "usage-said").read_text().split() == ["usage", "on", "--id", events[0]["install_id"]]
     log = (home / ".orkcraft" / "install.log").read_text()
-    assert f"== package: uv tool install --force --python 3.12 {product.package}[gui] @ git+https://github.com/" in log
-    assert f"{product.name} is installed. Next time: open a new terminal, go to a project and run: " in done.stdout
+    assert f"== package: uv tool install --force --python 3.12 {_spec(product)} @ git+https://github.com/" in log
+    assert f"{product.name} is installed. Next time: {NEXT[product.product]}" in done.stdout
 
 
 def test_a_failed_step_says_its_kind_of_error_and_where_to_tell_us(product, tmp_path):
@@ -175,10 +185,22 @@ def test_orkboard_ends_by_saying_how_to_open_it_and_never_opens_a_town(tmp_path)
     assert "town" not in done.stdout.lower() and (home / ".local" / "bin" / "orkboard").exists()
 
 
+def test_orkmine_is_played_in_the_terminal_so_it_gets_no_window_and_no_extras(tmp_path):
+    done, events, home = _run(tmp_path, "--product", "orkmine", "--no-report")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "uv tool install --force --python 3.12 orkmine @ git+https://github.com/orkWorks/orkMine" in (
+        home / "uv-calls").read_text()
+    assert "window" not in done.stdout.lower() and "browser" not in done.stdout.lower()
+    assert done.stdout.rstrip().endswith("open a new terminal and run: orkmine")
+    assert "town" not in done.stdout.lower() and (home / ".local" / "bin" / "orkmine").exists()
+
+
 @pytest.mark.parametrize("args", [("--look", "necropolis"), ("--role",), ("--role", "x; rm -rf ~"), ("--wat",),
                                   ("--product", "orkcraft"), ("--product", "x; rm"), ("--product",),
                                   ("--product", "orkboard", "--role", "engineer"),
-                                  ("--product", "orkboard", "--look", "camp")])
+                                  ("--product", "orkboard", "--look", "camp"),
+                                  ("--product", "orkmine", "--role", "engineer"),
+                                  ("--product", "orkmine", "--look", "office")])
 def test_a_wrong_option_stops_before_anything_is_installed(tmp_path, args):
     done, events, home = _run(tmp_path, "--no-report", *args)
     assert done.returncode == 2 and not (home / "uv-calls").exists() and not (home / ".orkcraft").exists()
@@ -203,7 +225,7 @@ const script = readFileSync(process.argv[3], "utf8");
 globalThis.fetch = async () => new Response(script, { status: 200 });
 const out = {};
 for (const q of ["?role=peon&look=office", "?role=x%22%3B%20rm%20-rf%20~&look=necropolis&product=orkcraft", "",
-                 "?product=orkboard"]) {
+                 "?product=orkboard", "?product=orkmine"]) {
   const res = await worker.fetch(new Request("https://w.example/install.sh" + q), {});
   out[q] = await res.text();
 }
@@ -214,9 +236,10 @@ console.log(JSON.stringify(out));
     picked = got["?role=peon&look=office"]
     assert 'ROLE="peon"' in picked and 'LOOK="office"' in picked
     assert got["?role=x%22%3B%20rm%20-rf%20~&look=necropolis&product=orkcraft"] == got[""] == SCRIPT.read_text(encoding="utf-8")
-    assert 'PRODUCT="orkboard"' in got["?product=orkboard"]
+    assert 'PRODUCT="orkboard"' in got["?product=orkboard"] and 'PRODUCT="orkmine"' in got["?product=orkmine"]
     for query, product, said in (("?role=peon&look=office", ORKLINE, "orkline --role peon --look office"),
-                                 ("?product=orkboard", ORKBOARD, "go to a project and run: orkboard")):
+                                 ("?product=orkboard", ORKBOARD, "go to a project and run: orkboard"),
+                                 ("?product=orkmine", ORKMINE, "open a new terminal and run: orkmine")):
         served = tmp_path / f"served-{product.product}.sh"
         served.write_text(got[query], encoding="utf-8")
         home, fake = tmp_path / f"home-{product.product}", tmp_path / "bin"

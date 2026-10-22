@@ -1,9 +1,10 @@
 #!/bin/sh
-# The installer of Orkline and Orkboard for macOS and Linux (docs/install.md):
+# The installer of Orkline, Orkboard and Orkmine for macOS and Linux (docs/install.md):
 #
 #   curl -fsSL https://orkcraft.dev/install.sh | sh                          # Orkline
 #   curl -fsSL https://orkcraft.dev/install/<role>/<look> | sh               # Orkline, opening on that class and look
 #   curl -fsSL https://orkcraft.dev/install.sh | sh -s -- --product orkboard # Orkboard
+#   curl -fsSL https://orkcraft.dev/install.sh | sh -s -- --product orkmine  # Orkmine
 #
 # It puts uv in place (when it is not there yet), a Python for the product, and the product itself as a
 # uv tool, then looks for the window toolkit and the AI tools. Each step is written to
@@ -35,7 +36,7 @@ PRODUCT=""
 ROLE=""
 LOOK=""
 OPEN=1                                        # open Orkline's town at the end, when there is a terminal
-USAGE="sh install.sh [--product orkline|orkboard] [--report | --no-report] [--role ROLE] [--look camp|office] [--no-open]"
+USAGE="sh install.sh [--product orkline|orkboard|orkmine] [--report | --no-report] [--role ROLE] [--look camp|office] [--no-open]"
 while [ $# -gt 0 ]; do
   case "$1" in
     --report) REPORT=1 ;;
@@ -54,16 +55,20 @@ done
 
 # -- the products: the few lines in which they differ (orkget/profile.py, schemas/common.json) ---------
 
+# EXTRAS: the window's packages, none for a product played in the terminal. NEXT: how to open it next time.
 case "${PRODUCT:-orkline}" in
   orkline)
-    PRODUCT=orkline NAME=Orkline PACKAGE=orkcraft AGENT=orkcraft RUN=orkline
-    REPO="https://github.com/orkWorks/orkLine" ;;
+    PRODUCT=orkline NAME=Orkline PACKAGE=orkcraft AGENT=orkcraft RUN=orkline EXTRAS=gui
+    REPO="https://github.com/orkWorks/orkLine" NEXT="open a new terminal, go to a project and run" ;;
   orkboard)
-    PRODUCT=orkboard NAME=Orkboard PACKAGE=orkboard AGENT=orkboard RUN=orkboard
-    REPO="https://github.com/orkWorks/orkBoard" ;;
-  *) echo "install: --product is orkline or orkboard" >&2; exit 2 ;;
+    PRODUCT=orkboard NAME=Orkboard PACKAGE=orkboard AGENT=orkboard RUN=orkboard EXTRAS=gui
+    REPO="https://github.com/orkWorks/orkBoard" NEXT="open a new terminal, go to a project and run" ;;
+  orkmine)
+    PRODUCT=orkmine NAME=Orkmine PACKAGE=orkmine AGENT=orkmine RUN=orkmine EXTRAS=""
+    REPO="https://github.com/orkWorks/orkMine" NEXT="open a new terminal and run" ;;
+  *) echo "install: --product is orkline, orkboard or orkmine" >&2; exit 2 ;;
 esac
-EXTRAS="gui"
+WHAT="${PACKAGE}${EXTRAS:+[${EXTRAS}]}"       # orkcraft[gui], orkmine
 case "$LOOK" in ""|camp|office) ;; *) echo "install: --look is camp or office" >&2; exit 2 ;; esac
 if [ "$PRODUCT" != orkline ] && [ -n "$ROLE$LOOK" ]; then
   echo "install: --role and --look are Orkline's; ${NAME} has none" >&2; exit 2
@@ -202,7 +207,7 @@ step() {                                      # step NAME EXTRA_PROPS COMMAND…
 
 say "${NAME} installer (${OS} ${ARCH}); the log: ${LOG}"
 if [ "$OS" = unknown ]; then
-  say "This installer is for macOS and Linux. On Windows: pipx install \"${PACKAGE}[${EXTRAS}] @ git+${REPO}\""
+  say "This installer is for macOS and Linux. On Windows: pipx install \"${WHAT} @ git+${REPO}\""
   exit 1
 fi
 
@@ -240,9 +245,9 @@ elif ! git --version >/dev/null 2>&1; then
   SOURCE=archive
 fi
 if [ -n "${ORKCRAFT_INSTALL_FROM:-}" ]; then   # a checkout of its own (CI tests the commit it runs on)
-  SOURCE=local; SPEC="${PACKAGE}[${EXTRAS}] @ file://$(cd "$ORKCRAFT_INSTALL_FROM" && pwd)"
-elif [ "$SOURCE" = git ]; then SPEC="${PACKAGE}[${EXTRAS}] @ git+${REPO}"
-else SPEC="${PACKAGE}[${EXTRAS}] @ ${REPO}/archive/refs/heads/main.tar.gz"; fi
+  SOURCE=local; SPEC="${WHAT} @ file://$(cd "$ORKCRAFT_INSTALL_FROM" && pwd)"
+elif [ "$SOURCE" = git ]; then SPEC="${WHAT} @ git+${REPO}"
+else SPEC="${WHAT} @ ${REPO}/archive/refs/heads/main.tar.gz"; fi
 say "${NAME}: installing from ${SOURCE}…"
 step package ", \"source\": \"${SOURCE}\"" uv tool install --force --python "$PYTHON" "$SPEC" || fail package
 
@@ -253,14 +258,17 @@ EXE="${BIN}/${PACKAGE}"
 step version '' "$EXE" --version || fail version
 
 # The window: pywebview and, on Linux, a web view it can use; without them the product opens in the browser.
-PY="$(dirname "$(readlink -f "$EXE" 2>/dev/null || echo "$EXE")")/python"
-WINDOW=browser
-if [ -x "$PY" ] && "$PY" -c "import webview" >/dev/null 2>&1; then
-  if [ "$OS" = darwin ]; then WINDOW=native
-  elif "$PY" -c "import gi" >/dev/null 2>&1 || "$PY" -c "import qtpy" >/dev/null 2>&1; then WINDOW=native; fi
+# A product played in the terminal has none of the window's packages, and no window step.
+if [ -n "$EXTRAS" ]; then
+  PY="$(dirname "$(readlink -f "$EXE" 2>/dev/null || echo "$EXE")")/python"
+  WINDOW=browser
+  if [ -x "$PY" ] && "$PY" -c "import webview" >/dev/null 2>&1; then
+    if [ "$OS" = darwin ]; then WINDOW=native
+    elif "$PY" -c "import gi" >/dev/null 2>&1 || "$PY" -c "import qtpy" >/dev/null 2>&1; then WINDOW=native; fi
+  fi
+  event install_step "\"step\": \"window\", \"ok\": true, \"seconds\": \"<10\", \"window\": \"${WINDOW}\""
+  [ "$WINDOW" = native ] && say "Window: its own" || say "Window: none here; ${NAME} opens in your browser"
 fi
-event install_step "\"step\": \"window\", \"ok\": true, \"seconds\": \"<10\", \"window\": \"${WINDOW}\""
-[ "$WINDOW" = native ] && say "Window: its own" || say "Window: none here; ${NAME} opens in your browser"
 
 TOOLS=""
 for t in claude codex agy; do
@@ -278,7 +286,7 @@ fi
 
 finish true
 say ""
-say "${NAME} is installed. Next time: open a new terminal, go to a project and run: ${RUN}"
+say "${NAME} is installed. Next time: ${NEXT}: ${RUN}"
 
 # Orkline's town opens now, on the class and look picked on orkcraft.dev, when there is a terminal to hold it.
 [ "$PRODUCT" = orkline ] || exit 0

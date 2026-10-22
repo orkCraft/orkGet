@@ -1,9 +1,9 @@
 # Anonymous usage stats
 
-Orkline and Orkboard can share which of their features are used, so we know what to make better. It is **off until
-you say yes**, and **one answer covers every product on this computer**: the installer asks once, or the first
-product you open, and no product asks again. Each product's Settings, or `orkcraft usage on|off|status`, change it at
-any time, for all of them (the answer lives in `~/.config/orkcraft/`, which they all read).
+Orkline, Orkboard and Orkmine can share which of their features are used, so we know what to make better. It is
+**off until you say yes**, and **one answer covers every product on this computer**: the installer asks once, or the
+first product you open, and no product asks again. Each product's Settings, or `orkcraft usage on|off|status`, change
+it at any time, for all of them (the answer lives in `~/.config/orkcraft/`, which they all read).
 
 ## What is sent
 
@@ -32,17 +32,27 @@ go as buckets (`0`, `1`, `2-5`, `6-10`, `11+`), never as exact counts.
 | `app_opened` | the window opens | `face` (gui), `tools` |
 | `app_closed` | the window closes | `minutes` it was open |
 
+### Orkmine ([schemas/orkmine.json](../schemas/orkmine.json))
+
+| Event | When | Properties |
+|---|---|---|
+| `app_opened` | it opens in the terminal | `face` (tui), `tools` |
+| `app_closed` | it closes | `minutes` it was open |
+
+Orkmine reads your sources and keeps your notes on your computer. **None of that is ever sent**: no topic, no
+source, no note, nothing you read or wrote in it.
+
 ### The installer, for every product ([schemas/install.json](../schemas/install.json), [install.md](install.md))
 
 | Event | When | Properties |
 |---|---|---|
 | `install_started` | the installer starts | `method` (sh), `arch` (x86_64 · arm64 · other), `upgrade` (already installed) |
-| `install_step` | each of its steps ends | `step` (uv · python · package · version · window · agents), `ok`, `seconds` (`<10` · `10-60` · `60-300` · `300+`); when it failed `error`, a kind: disk_full · permission · tls · network · python_download · resolve_failed · build_failed · git_missing · unknown; and per step `found` (uv was there), `source` (git · archive · local), `window` (native · browser), `tools` (claude · codex · agy found) |
+| `install_step` | each of its steps ends | `step` (uv · python · package · version · window · agents), `ok`, `seconds` (`<10` · `10-60` · `60-300` · `300+`); when it failed `error`, a kind: disk_full · permission · tls · network · python_download · resolve_failed · build_failed · git_missing · unknown; and per step `found` (uv was there), `source` (git · archive · local), `window` (native · browser; only a product with a window), `tools` (claude · codex · agy found) |
 | `install_finished` | the installer ends | `ok`, `seconds`, `failed_step` |
 
-Every batch also carries the product (orkline · orkboard), a random install id (drawn when you say yes, the same for
-every product on this computer, forgotten when you say no), when this window was opened, the product's version, the
-OS (darwin · linux · windows) and the Python version.
+Every batch also carries the product (orkline · orkboard · orkmine), a random install id (drawn when you say yes, the
+same for every product on this computer, forgotten when you say no), when this window was opened, the product's
+version, the OS (darwin · linux · windows) and the Python version.
 
 **Never sent:** your code, prompts, what the orks or you wrote, file names, paths, project or building names, git
 data, your settings' text, your email, your IP address.

@@ -1,4 +1,4 @@
-"""The two products' profiles as each writes it in `<package>/product.py` (docs/specs/41-orkget.md §2.2):
+"""The products' profiles as each writes it in `<package>/product.py` (docs/specs/41-orkget.md §2.2):
 the tests run every module of the copy once for each. The values are today's; `version` is a test's."""
 from __future__ import annotations
 
@@ -18,4 +18,10 @@ ORKBOARD = Profile(
     manual='uv tool install --force "orkboard[gui] @ git+https://github.com/orkWorks/orkBoard"',
     entry="orkboard.gui.board_host", state="orkboard-updates.json")
 
-ALL = (ORKLINE, ORKBOARD)
+ORKMINE = Profile(
+    product="orkmine", name="Orkmine", package="orkmine", version="0.1.0", agent="orkmine",
+    manifest="https://raw.githubusercontent.com/orkWorks/orkMine/main/updates.json",
+    source="git+https://github.com/orkWorks/orkMine", extras="",
+    entry="orkmine.cli", state="orkmine-updates.json")
+
+ALL = (ORKLINE, ORKBOARD, ORKMINE)

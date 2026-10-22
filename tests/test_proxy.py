@@ -1,6 +1,6 @@
 """The proxy (proxy/worker.js, docs/usage.md, docs/crashes.md), run in Node: today's bodies from every copy
 released before orkGet get today's answers and requests (Orkline's, with `product` added); Orkboard's go to
-its own Sentry project; anything not a product's is refused. Skipped without Node."""
+its own Sentry project, as Orkmine's go to its own; anything not a product's is refused. Skipped without Node."""
 from __future__ import annotations
 
 import json
@@ -90,6 +90,26 @@ out.installerCalls = sent();
     assert started["event_properties"] == {"method": "sh", "arch": "arm64", "upgrade": False, "product": "orkline"}
 
 
+def test_orkmine_sends_only_its_own_events_and_the_installers(tmp_path):
+    out = _node(tmp_path, """
+const env = { AMPLITUDE_API_KEY: "key" };
+out.status = await send("/v1/events", "orkmine/0.1.0", base({ product: "orkmine", app_version: "0.1.0", events: [
+  { event: "app_opened", props: { face: "tui", tools: ["claude"], topic: "my secret research" } },
+  { event: "app_opened", props: { face: "gui" } },
+  { event: "app_closed", props: { minutes: "5-30" } },
+  { event: "building_built", props: { type: "lake" } },
+  { event: "install_finished", props: { ok: true, failed_step: "none" } }] }), env);
+out.calls = sent();
+""")
+    assert out["status"] == 204
+    events = json.loads(out["calls"][0]["body"])["events"]
+    assert [(e["event_type"], e["event_properties"]) for e in events] == [
+        ("app_opened", {"face": "tui", "tools": ["claude"], "product": "orkmine"}),
+        ("app_opened", {"product": "orkmine"}),                    # no window: "gui" is not Orkmine's face
+        ("app_closed", {"minutes": "5-30", "product": "orkmine"}),
+        ("install_finished", {"ok": True, "failed_step": "none", "product": "orkmine"})]
+
+
 def test_anything_not_a_products_is_refused(tmp_path):
     out = _node(tmp_path, """
 const env = { AMPLITUDE_API_KEY: "key" };
@@ -167,3 +187,21 @@ out.down = await answer(502);
 out.badKey = await answer(400);
 """)
     assert (out["busy"], out["down"], out["badKey"]) == (503, 503, 204)
+
+
+def test_orkmines_crashes_go_to_its_own_project_as_a_game_in_the_terminal_or_nowhere(tmp_path):
+    out = _node(tmp_path, CRASH + """
+const tui = (file) => ({ ...event(file), face: "tui" });
+const body = base({ product: "orkmine", app_version: "0.1.0", items: [tui("orkmine/cli.py"), session] });
+out.status = await send("/v1/crash", "orkmine/0.1.0", body,
+  { SENTRY_DSN: "https://pubkey@o1.ingest.us.sentry.io/42", SENTRY_DSN_ORKMINE: "https://mkey@o4.ingest.de.sentry.io/11" });
+out.calls = sent();
+out.without = await send("/v1/crash", "orkmine/0.1.0", body, { SENTRY_DSN: "https://pubkey@o1.ingest.us.sentry.io/42" });
+out.withoutCalls = sent();
+""")
+    assert out["status"] == 204
+    (call,) = out["calls"]
+    assert call["url"] == "https://o4.ingest.de.sentry.io/api/11/envelope/" and "sentry_key=mkey" in call["auth"]
+    event = _envelope(call["body"])[2]
+    assert event["release"] == "orkmine@0.1.0" and event["tags"]["face"] == "tui"
+    assert out["without"] == 204 and out["withoutCalls"] == []      # no DSN of Orkmine's: dropped, never Orkline's

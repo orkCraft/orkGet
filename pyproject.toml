@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "orkget"
 dynamic = ["version"]          # orkget/__init__.py __version__: the copy's version, in each product's stamp
-description = "orkGet: what installs Orkline and Orkboard, keeps them up to date and, with a yes, says how it goes"
+description = "orkGet: what installs Orkline, Orkboard and Orkmine, keeps them up to date and, with a yes, says how it goes"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"

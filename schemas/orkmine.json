@@ -1,0 +1,10 @@
+{
+  "about": "Orkmine's events (docs/usage.md): only when it opens and closes, as Orkboard's. It is played in the terminal, so its face is tui. Never a topic, a source, a note or anything read or written in it; its own events wait until it is published, each with a spec (orkWorks/orkMine docs/specs/01-orkmine.md §12).",
+  "sets": {
+    "mine_faces": ["tui"]
+  },
+  "events": {
+    "app_opened": {"face": "set:mine_faces", "tools": "list:tools"},
+    "app_closed": {"minutes": "set:minutes"}
+  }
+}

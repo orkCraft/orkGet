@@ -5,12 +5,13 @@ For macOS and Linux, one line puts everything in place:
 ```bash
 curl -fsSL https://orkcraft.dev/install.sh | sh                            # Orkline
 curl -fsSL https://orkcraft.dev/install.sh | sh -s -- --product orkboard   # Orkboard
+curl -fsSL https://orkcraft.dev/install.sh | sh -s -- --product orkmine    # Orkmine
 ```
 
 [`install.sh`](../install.sh) at the root of this repository is the whole installer, for every product: read it
 before you run it. It needs only `sh` and `curl`. Orkline's opens with the Workchief in a terminal, drawn from his
 sprite in 12×5 cells (`tools/install_banner.py`; his words beside him only when the terminal is 48 columns or wider;
-not with `NO_COLOR` or outside a terminal). Orkboard's has no banner.
+not with `NO_COLOR` or outside a terminal). Orkboard's and Orkmine's have no banner.
 
 Orkline's ends by opening the town. orkcraft.dev hands it the class and look picked there, in the address:
 
@@ -20,18 +21,19 @@ curl -fsSL https://orkcraft.dev/install/engineer/camp | sh
 
 That address redirects to the usage proxy ([proxy/](../proxy/)), which writes the words into the script's
 `PRODUCT=""`, `ROLE=""` and `LOOK=""` lines (only words it knows the shape of; anything else leaves them empty):
-`…/install.sh?product=orkboard` for Orkboard. The same file is also at
+`…/install.sh?product=orkboard` for Orkboard, `…?product=orkmine` for Orkmine. The same file is also at
 `https://raw.githubusercontent.com/orkWorks/orkGet/main/install.sh`, with options instead:
 `… | sh -s -- --role engineer --look camp`.
 
 | Option | |
 |---|---|
-| `--product orkline\|orkboard` | which product (Orkline when it is not given) |
-| `--role ROLE`, `--look camp\|office` | Orkline's: passed to `orkcraft` when the town opens (`orkcraft --help`); with `--product orkboard` they stop the installer before anything is installed |
+| `--product orkline\|orkboard\|orkmine` | which product (Orkline when it is not given) |
+| `--role ROLE`, `--look camp\|office` | Orkline's: passed to `orkcraft` when the town opens (`orkcraft --help`); with `--product orkboard` or `orkmine` they stop the installer before anything is installed |
 | `--no-open` | install only; with no terminal (a script, CI) it never opens |
 | `--report`, `--no-report` | the question below, answered beforehand |
 
-On Linux without GTK or Qt for Python the product opens in the browser.
+On Linux without GTK or Qt for Python a product with a window opens in the browser. Orkmine is played in the
+terminal: it has no window, so it needs neither.
 
 ## What it does
 
@@ -39,9 +41,9 @@ On Linux without GTK or Qt for Python the product opens in the browser.
 |---|---|
 | `uv` | uses the [uv](https://docs.astral.sh/uv/) that is there and answers, or puts the pinned version in `~/.local/bin` |
 | `python` | `uv python install 3.12`: a Python of its own, whatever the system has |
-| `package` | `uv tool install "<package>[gui] @ git+https://github.com/Orkcraft/<repository>"` (GitHub's archive of `main` when git does not work, e.g. a Mac without the developer tools): `orkcraft` for Orkline, `orkboard` for Orkboard |
-| `version` | `orkcraft --version` (or `orkboard --version`) runs |
-| `window` | whether the product gets a window of its own or opens in the browser |
+| `package` | `uv tool install "<package>[gui] @ git+https://github.com/orkWorks/<repository>"` (GitHub's archive of `main` when git does not work, e.g. a Mac without the developer tools): `orkcraft` for Orkline, `orkboard` for Orkboard, and `orkmine` for Orkmine, without `[gui]` |
+| `version` | `orkcraft --version` (or `orkboard --version`, `orkmine --version`) runs |
+| `window` | whether the product gets a window of its own or opens in the browser; Orkmine skips it |
 | `agents` | which AI tools are on the PATH: `claude`, `codex`, `agy` |
 
 Each step's command and everything it printed go to `~/.orkcraft/install.log`. When a step fails the installer

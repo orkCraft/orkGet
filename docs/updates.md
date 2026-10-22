@@ -1,6 +1,6 @@
 # Updates
 
-Orkline and Orkboard each look for a newer version of themselves and install it, with the same code
+Orkline, Orkboard and Orkmine each look for a newer version of themselves and install it, with the same code
 ([`orkget/updates.py`](../orkget/updates.py), carried by each as its copy). A **critical update** — a fix for something
 that loses work or lets harm in — installs by itself the next time the product opens, before anything else loads.
 Any other update is offered: the window asks once per version, and `orkcraft update` (or `orkboard update`) installs
@@ -50,11 +50,12 @@ changes (`profile.manifest`; each product's `tests/test_updates.py` pins it):
 |---|---|
 | Orkline | `https://raw.githubusercontent.com/orkWorks/orkLine/main/updates.json` |
 | Orkboard | `https://raw.githubusercontent.com/orkWorks/orkBoard/main/updates.json` (while it has none, nothing is offered) |
+| Orkmine | `https://raw.githubusercontent.com/orkWorks/orkMine/main/updates.json` (while it has none, nothing is offered) |
 
-What was read is kept in `~/.cache/orkcraft/` (`updates.json` for Orkline, `orkboard-updates.json` for Orkboard).
-How a product publishes a release is in its own `docs/updates.md`: one commit to its `main` that raises its
-`__version__` and adds the release at the top of its `updates.json`; `"critical": true` only for a security fix or
-a bug that loses work.
+What was read is kept in `~/.cache/orkcraft/` (`updates.json` for Orkline, `orkboard-updates.json` for Orkboard,
+`orkmine-updates.json` for Orkmine). How a product publishes a release is in its own `docs/updates.md`: one commit to
+its `main` that raises its `__version__` and adds the release at the top of its `updates.json`; `"critical": true`
+only for a security fix or a bug that loses work.
 
 ## When nothing is read
 

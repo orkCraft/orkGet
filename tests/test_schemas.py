@@ -24,7 +24,7 @@ def _schema(name: str) -> dict:
 
 def test_each_product_the_proxy_knows_has_a_file_and_nothing_else_does():
     files = {p.stem for p in SCHEMAS.glob("*.json")} - {"common", "install"}
-    assert files == set(PRODUCTS) == {"orkline", "orkboard"}
+    assert files == set(PRODUCTS) == {"orkline", "orkboard", "orkmine"}
 
 
 @pytest.mark.parametrize("product", PRODUCTS)
@@ -84,4 +84,5 @@ def test_what_every_installed_copy_has_written_in_never_changes():
     assert usage.ENDPOINT == "https://orkcraft-usage.vadim-sidoryk.workers.dev/v1/events"
     assert {p.product: p.manifest for p in ALL} == {
         "orkline": "https://raw.githubusercontent.com/orkWorks/orkLine/main/updates.json",
-        "orkboard": "https://raw.githubusercontent.com/orkWorks/orkBoard/main/updates.json"}
+        "orkboard": "https://raw.githubusercontent.com/orkWorks/orkBoard/main/updates.json",
+        "orkmine": "https://raw.githubusercontent.com/orkWorks/orkMine/main/updates.json"}

@@ -1,7 +1,9 @@
-# The usage proxy of Orkline and Orkboard (README.md). The Amplitude key and the Sentry DSNs are secrets, never here:
+# The usage proxy of Orkline, Orkboard and Orkmine (README.md). The Amplitude key and the Sentry DSNs are secrets,
+# never here:
 #   npx wrangler secret put AMPLITUDE_API_KEY
 #   npx wrangler secret put SENTRY_DSN               # Orkline's Sentry project
 #   npx wrangler secret put SENTRY_DSN_ORKBOARD      # Orkboard's
+#   npx wrangler secret put SENTRY_DSN_ORKMINE       # Orkmine's
 # Its name and account stay as they are: every installed copy sends to https://orkcraft-usage.<account>.workers.dev.
 name = "orkcraft-usage"
 main = "worker.js"

@@ -1,4 +1,4 @@
-"""A product's profile (docs/specs/41-orkget.md §2): the few values in which Orkline and Orkboard differ.
+"""A product's profile (docs/specs/41-orkget.md §2): the few values in which Orkline, Orkboard and Orkmine differ.
 
 The product makes it once, in `<package>/product.py`, and hands it to its copy before anything else runs:
 
@@ -32,14 +32,14 @@ def getenv(name: str, default: str = "") -> str:
 
 @dataclass(frozen=True)
 class Profile:
-    product: str                       # orkline · orkboard: a body's `product`, the schema's file name
+    product: str                       # orkline · orkboard · orkmine: a body's `product`, the schema's file name
     name: str                          # Orkline: what a person reads
     package: str                       # orkcraft: the import name, the distribution from git, brew's keg
     version: str                       # the product's __version__
     agent: str                         # orkcraft: the User-Agent's word, and Sentry's release (`orkcraft@0.3.0`)
     manifest: str                      # where the installed copies read the list of releases: never changes
     source: str                        # git+https://github.com/…: what a copy from git installs again
-    extras: str = "gui"
+    extras: str = "gui"                # the window's packages; "" for a product played in the terminal
     pypi: str = ""                     # the name on PyPI, "" when it is not there
     names: tuple[str, ...] = ()        # the names pipx or uv may know it by (its environment's folder)
     manual: str = ""                   # what to run when it cannot update itself
@@ -57,7 +57,8 @@ class Profile:
         if not self.entry:
             object.__setattr__(self, "entry", f"{self.package}.cli")
         if not self.manual:
-            object.__setattr__(self, "manual", f'uv tool install --force "{self.package}[{self.extras}] @ {self.source}"')
+            what = f"{self.package}[{self.extras}]" if self.extras else self.package
+            object.__setattr__(self, "manual", f'uv tool install --force "{what} @ {self.source}"')
 
 
 _current: Profile | None = None

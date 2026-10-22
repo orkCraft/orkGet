@@ -1,5 +1,5 @@
-// The usage proxy of Orkline and Orkboard (docs/usage.md, docs/crashes.md): a Cloudflare Worker between the
-// products and Amplitude and Sentry. It holds the Amplitude key and each product's Sentry DSN (secrets of the
+// The usage proxy of Orkline, Orkboard and Orkmine (docs/usage.md, docs/crashes.md): a Cloudflare Worker between
+// the products and Amplitude and Sentry. It holds the Amplitude key and each product's Sentry DSN (secrets of the
 // Worker, never in the repository), keeps only the events and properties `schemas/` lists — the same files
 // every product's copy carries — limits how often one install may send, and passes the rest on. The person's
 // IP address stays here: Amplitude and Sentry only see the Worker's request.
@@ -17,8 +17,9 @@ import common from "../schemas/common.json" with { type: "json" };
 import install from "../schemas/install.json" with { type: "json" };
 import orkline from "../schemas/orkline.json" with { type: "json" };
 import orkboard from "../schemas/orkboard.json" with { type: "json" };
+import orkmine from "../schemas/orkmine.json" with { type: "json" };
 
-const SCHEMAS = { orkline, orkboard };
+const SCHEMAS = { orkline, orkboard, orkmine };
 const PRODUCTS = common.products;                  // {product: {agent, dsn}}
 const AGENTS = Object.values(PRODUCTS).map((p) => `${p.agent}/`);
 
@@ -112,9 +113,11 @@ async function batch(request, env) {
 }
 
 // -- crash reports (docs/crashes.md): the product's own small form, checked field by field, then written
-// as a Sentry envelope with the key this Worker holds for that product (SENTRY_DSN, SENTRY_DSN_ORKBOARD) ----
+// as a Sentry envelope with the key this Worker holds for that product (SENTRY_DSN, SENTRY_DSN_ORKBOARD,
+// SENTRY_DSN_ORKMINE) ------------------------------------------------------------------------------------------
 
 const WHERE = ["unhandled", "thread", "asyncio", "command", "clock", "window"];
+const FACES = ["gui", "tui"];                      // a window, or a game in the terminal (Orkmine); else "cli"
 const STATUSES = ["ok", "exited", "crashed", "abnormal"];
 const ENVIRONMENTS = ["production", "checkout"];
 const IDENT = /^[A-Za-z_$<>?][\w.$<>]{0,99}$/;
@@ -144,7 +147,7 @@ function crashEvent(e, base) {
     level: e.level === "fatal" ? "fatal" : "error", release: base.release,
     environment: ENVIRONMENTS.includes(e.environment) ? e.environment : "production",
     user: { id: base.install_id, ip_address: null }, server_name: "",
-    tags: { where: e.where, os: base.os, python: base.python, face: e.face === "gui" ? "gui" : "cli",
+    tags: { where: e.where, os: base.os, python: base.python, face: FACES.includes(e.face) ? e.face : "cli",
       ...(typeof e.command === "string" && /^[a-z][a-z0-9_.]{0,60}$/.test(e.command) ? { command: e.command } : {}) },
     contexts: { os: { name: base.os }, runtime: { name: "CPython", version: base.python } },
     exception: { values },

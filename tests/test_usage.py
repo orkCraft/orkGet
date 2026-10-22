@@ -35,13 +35,14 @@ def test_nothing_is_sent_until_the_operator_says_yes(sharing, product, machine):
 def test_a_yes_sends_only_the_listed_properties_and_names_the_product(sharing, product, machine):
     sent: list = []
     u = _usage(machine, sent)
-    u.track("app_opened", face="gui", tools=["claude"], title="My secret project", path="/home/me")
+    face = "gui" if product.extras else "tui"              # a product played in the terminal has no window
+    u.track("app_opened", face=face, tools=["claude"], title="My secret project", path="/home/me")
     u.track("app_opened", tools=["claude", "../../etc"])     # not a tool: the event goes, the value not
     u.track("prompt_typed", text="hello")                  # not an event at all
     _flush(u)
     (url, body), = sent
     assert url == "https://usage.example/v1/events"
-    assert [e["props"] for e in body["events"]] == [{"face": "gui", "tools": ["claude"]}, {}]
+    assert [e["props"] for e in body["events"]] == [{"face": face, "tools": ["claude"]}, {}]
     assert body["product"] == product.product and body["app_version"] == product.version
     assert re.fullmatch(r"[0-9a-f]{32}", body["install_id"])
     assert "My secret project" not in json.dumps(body) and "/home/me" not in json.dumps(body)
