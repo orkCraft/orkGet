@@ -7,7 +7,7 @@ otherwise; any other release is offered and installs with one click (or `<comman
 
     s = updates.load_state()                  # what was read last, from the cache: no network
     offer = updates.offer(s.manifest)         # what is newer than this version
-    offer.version, offer.critical, offer.notes
+    offer.version, offer.critical, offer.major, offer.notes
     way = updates.method()                    # how this copy was installed: git, brew, pipx, uv, pip
     result = updates.install(way)             # its own tool upgrades it; result.ok, result.output
     updates.check(force=True)                 # read the list again now (a few seconds at most)
@@ -75,6 +75,18 @@ def newer(a: str, b: str) -> bool:
     return version_key(a) > version_key(b)
 
 
+def series(text: str) -> tuple[int, ...]:
+    """The line a version belongs to: its first number, or its first two while the first is 0
+    ("1.4.2" → (1,), "0.3.1" → (0, 3)), as semver counts a major version before 1.0."""
+    key = version_key(text) + (0, 0)
+    return key[:2] if key[0] == 0 else key[:1]
+
+
+def major(a: str, b: str) -> bool:
+    """`a` starts a later line than `b`: 0.3 after 0.2.9, 2.0 after 1.9."""
+    return series(a) > series(b)
+
+
 # -- the list of releases -----------------------------------------------------------------------
 
 @dataclass(frozen=True)
@@ -83,15 +95,18 @@ class Release:
     critical: bool = False
     notes: str = ""
     date: str = ""
+    major: bool = False                # the list says so, whatever its number (`"major": true`)
 
 
 @dataclass(frozen=True)
 class Offer:
     """What is newer than the running version: the latest, whether any release on the way is critical,
-    and what each of them changes, newest first."""
+    whether it is a major update (a later line than the running version's, or a release the list calls
+    major), and what each of them changes, newest first."""
     version: str
     critical: bool
     releases: tuple[Release, ...]
+    major: bool = False
 
     @property
     def notes(self) -> list[str]:
@@ -102,7 +117,7 @@ class Offer:
         return [f"{r.version}: {r.notes}" for r in self.releases if r.critical and r.notes]
 
     def to_dict(self) -> dict[str, Any]:
-        return {"version": self.version, "critical": self.critical, "notes": self.notes,
+        return {"version": self.version, "critical": self.critical, "major": self.major, "notes": self.notes,
                 "critical_notes": self.critical_notes}
 
 
@@ -115,7 +130,8 @@ def releases(manifest: Any) -> list[Release]:
         if not isinstance(raw, dict) or not isinstance(raw.get("version"), str) or not version_key(raw["version"]):
             continue
         out.append(Release(version=raw["version"].strip()[:40], critical=raw.get("critical") is True,
-                           notes=str(raw.get("notes") or "")[:500], date=str(raw.get("date") or "")[:20]))
+                           notes=str(raw.get("notes") or "")[:500], date=str(raw.get("date") or "")[:20],
+                           major=raw.get("major") is True))
     return sorted(out, key=lambda r: version_key(r.version), reverse=True)
 
 
@@ -125,7 +141,8 @@ def offer(manifest: Any, current: str | None = None) -> Offer | None:
     ahead = tuple(r for r in releases(manifest) if newer(r.version, current))
     if not ahead:
         return None
-    return Offer(version=ahead[0].version, critical=any(r.critical for r in ahead), releases=ahead)
+    return Offer(version=ahead[0].version, critical=any(r.critical for r in ahead), releases=ahead,
+                 major=major(ahead[0].version, current) or any(r.major for r in ahead))
 
 
 def due(found: Offer | None, policy: str) -> bool:

@@ -74,6 +74,30 @@ def test_an_offer_is_critical_when_any_release_on_the_way_is():
     assert calm.version == "0.4.0" and not calm.critical
 
 
+def test_a_later_line_is_a_major_update():
+    assert updates.series("1.4.2") == (1,) and updates.series("0.3.1") == (0, 3) and updates.series("0") == (0, 0)
+    assert updates.major("0.3.0", "0.2.9") and updates.major("2.0", "1.9.9") and updates.major("1.0.0", "0.9.0")
+    assert not updates.major("0.2.10", "0.2.9") and not updates.major("1.9.0", "1.0.0")
+    found = updates.offer(manifest(("0.3.1", False), ("0.3.0", False), ("0.2.10", False)), current="0.2.9")
+    assert found.version == "0.3.1" and found.major and found.to_dict()["major"] is True
+    patch = updates.offer(manifest(("0.2.10", False)), current="0.2.9")
+    assert not patch.major and patch.to_dict()["major"] is False
+
+
+def test_the_list_can_call_a_release_major():
+    listed = {"releases": [{"version": "1.5.0", "major": True}, {"version": "1.4.1", "major": "yes"}]}
+    assert [r.major for r in updates.releases(listed)] == [True, False]
+    assert updates.offer(listed, current="1.4.0").major
+    assert not updates.offer(listed, current="1.4.0").critical
+    assert not updates.offer({"releases": [{"version": "1.4.1", "major": "yes"}]}, current="1.4.0").major
+
+
+def test_a_major_update_installs_by_itself_only_as_the_policy_says(product):
+    big = updates.offer(manifest(("99.0.0", False)))
+    assert big.major
+    assert updates.due(big, "auto") and not updates.due(big, "critical") and not updates.due(big, "ask")
+
+
 def test_malformed_releases_are_left_out():
     found = updates.offer({"releases": [{"version": 3}, "x", {"notes": "no version"}, {"version": "0.9.0"}]},
                           current="0.1.0")
