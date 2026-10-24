@@ -13,4 +13,4 @@ standard library and itself; the product hands in what differs, its profile:
     crashes.py    the crash reports and each run as a session, to the proxy
     stamp.py      the copy: written into a product, and checked there
 """
-__version__ = "0.1.0"
+__version__ = "0.2.0"

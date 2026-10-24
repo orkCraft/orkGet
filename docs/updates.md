@@ -22,6 +22,14 @@ has, and tries again after a day (or now, with `orkcraft update`).
 The window reads the list when it opens and every 6 hours. When it finds a newer version it asks once; **Update and
 restart** installs it, and the window closes and opens again on the new code.
 
+## A major update
+
+An update is **major** when it starts a later line than the version running: a new first number (1.9 → 2.0), or,
+before 1.0, a new second one (0.2.9 → 0.3.0). A release the list marks `"major": true` is major whatever its number.
+The window says a major update louder than a patch, in its own words (*Orkline 0.3 is out*), with **Update and
+restart**; what installs by itself is still the policy's alone, as for any other update. The offer the window reads
+(`Offer.to_dict()`) carries `major` beside `critical`.
+
 ## How it installs
 
 With the tool that installed this copy, so its records stay right:
@@ -54,7 +62,8 @@ changes (`profile.manifest`; each product's `tests/test_updates.py` pins it):
 What was read is kept in `~/.cache/orkcraft/` (`updates.json` for Orkline, `orkboard-updates.json` for Orkboard).
 How a product publishes a release is in its own `docs/updates.md`: one commit to its `main` that raises its
 `__version__` and adds the release at the top of its `updates.json`; `"critical": true` only for a security fix or
-a bug that loses work.
+a bug that loses work; `"major": true` only for a release that changes what people do, when its number does not say
+so already.
 
 ## When nothing is read
 
